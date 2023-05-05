@@ -53,23 +53,21 @@ private:
 		OrtArenaAllocator, OrtMemTypeDefault
 	);
 
-	// Hardcode input node names
-	// Encoder
-	unsigned int encoder_num_inputs = 1;
+	// Encoder Hardcode input and output node names
+	unsigned int encoder_num_inputs;
 	std::vector<const char*> encoder_input_node_names;
 	std::vector<std::vector<int64_t>> encoder_input_node_dims;
-	// Decoder
-	unsigned int decoder_num_inputs = 2;
+
+	unsigned int encoder_num_outputs;
+	std::vector<const char*> encoder_output_node_names;
+	std::vector<std::vector<int64_t>> encoder_output_node_dims;
+
+	// Decoder Hardcode input and output node names
+	unsigned int decoder_num_inputs;
 	std::vector<const char*> decoder_input_node_names;
 	std::vector<std::vector<int64_t>> decoder_input_node_dims;
 
-	// Hardcode output node names
-	// Encoder
-	unsigned int encoder_num_outputs = 1;
-	std::vector<const char*> encoder_output_node_names;
-	std::vector<std::vector<int64_t>> encoder_output_node_dims;
-	// Decoder
-	unsigned int decoder_num_outputs = 1;
+	unsigned int decoder_num_outputs;
 	std::vector<const char*> decoder_output_node_names;
 	std::vector<std::vector<int64_t>> decoder_output_node_dims;
 	
@@ -87,7 +85,7 @@ protected:
 	Ort::Value Encoder_PreProcess(cv::Mat Image);
 	void Decoder_PreProcess();
 
-	void Encoder_BuildEmbedding();
+	Ort::Value Encoder_BuildEmbedding(Ort::Value input_tensor);
 	void Decoder_Inference();
 
 	void Encoder_PostProcess();

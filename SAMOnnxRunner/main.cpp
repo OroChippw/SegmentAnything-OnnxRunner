@@ -26,6 +26,8 @@ int main()
     
     Segmentator.InferenceSingleImage(cfg , srcImage , clickinfo);
 
+    Segmentator.ResetInitEncoder();
+
     std::cout << "Hello World!\n";
 }
 
