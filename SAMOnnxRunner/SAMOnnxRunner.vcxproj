@@ -59,23 +59,23 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\OnnnxProps\onnxruntime_1_14.props" />
     <Import Project="..\..\..\OpencvProps\OpenCVd.props" />
+    <Import Project="..\..\..\OnnnxProps\onnxruntime_1_12.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\OnnnxProps\onnxruntime_1_14.props" />
     <Import Project="..\..\..\OpencvProps\OpenCVd.props" />
+    <Import Project="..\..\..\OnnnxProps\onnxruntime_1_12.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\OnnnxProps\onnxruntime_1_14.props" />
     <Import Project="..\..\..\OpencvProps\OpenCVd.props" />
+    <Import Project="..\..\..\OnnnxProps\onnxruntime_1_12.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\OnnnxProps\onnxruntime_1_14.props" />
     <Import Project="..\..\..\OpencvProps\OpenCV.props" />
+    <Import Project="..\..\..\OnnnxProps\onnxruntime_1_12.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

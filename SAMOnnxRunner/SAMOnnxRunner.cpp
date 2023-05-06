@@ -30,17 +30,15 @@ cv::Mat SAMOnnxRunner::Image_PreProcess(cv::Mat srcImage)
 	return rgbImage;
 }
 
-Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image) throw (std::runtime_error)
+Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image)
 {
 	// => Preprocess for encoder
 	// Meta AI training encoder with a resolution of 1024 * 1024
 	encoder_input_node_dims = {
 		{1,3,1024,1024} // src after ResizeLongestSide , (b = 1 , c , h ,w)
 	};
-
 	const unsigned int channels = Image.channels();
 	
-
 	std::cout << "Transforms image by ResizeLongestSide ... " << std::endl;
 	cv::Mat resizeImage = ResizeLongestSide(EncoderInputSize , Image);
 	
@@ -54,30 +52,33 @@ Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image) throw (std::runtime_
 	cv::copyMakeBorder(resizeImage , paddingImage , 0 ,pad_h , 0 , pad_w , cv::BorderTypes::BORDER_CONSTANT , cv::Scalar(0,0,0));
 	
 	// 构造输入Encoder的tensor
-	const unsigned int target_channel = 3;
-	const unsigned int target_height = 1024;
-	const unsigned int target_width = 1024;
+	const unsigned int target_height = encoder_input_node_dims.at(0).at(2);
+	const unsigned int target_width = encoder_input_node_dims.at(0).at(3);
+	const unsigned int target_channel = encoder_input_node_dims.at(0).at(1);
+	/*std::cout << "target_channel : " << target_channel << std::endl;
+	std::cout << "target_width : " << target_width << std::endl;
+	std::cout << "target_height : " << target_height << std::endl;*/
+
 	const unsigned int target_tensor_size = target_channel * target_height * target_width;
-	if (target_channel != channels)
-	{
-		throw std::runtime_error("Runtime Error Channel mismatch.");
-	}
 
-	std::cout << "Resize input value handler to "<< target_tensor_size << std::endl;
+	std::cout << "Resize input value handler to " << target_tensor_size << std::endl;
 	input_bgr_value_handler.resize(target_tensor_size);
-
-	std::vector<cv::Mat> mat_channels;
-	cv::split(paddingImage, mat_channels);
 
 	int flag = 1;
 	if (flag == 1)
 	{
 		// C * H * W
+		std::vector<cv::Mat> mat_channels;
+		cv::split(paddingImage, mat_channels);
+		if (target_channel != channels)
+		{
+			throw std::runtime_error("Runtime Error Channel mismatch.");
+		}
 		for (unsigned int i = 0; i < channels; i++)
-			{
-				std::memcpy(input_bgr_value_handler.data() + i * (target_height * target_width),
-					mat_channels.at(i).data, target_height * target_width * sizeof(float));
-			}
+		{
+			std::memcpy(input_bgr_value_handler.data() + i * (target_height * target_width),
+				mat_channels.at(i).data, target_height * target_width * sizeof(float));
+		}
 	}
 	else
 	{
@@ -85,12 +86,13 @@ Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image) throw (std::runtime_
 		std::memcpy(input_bgr_value_handler.data(), paddingImage.data, target_tensor_size * sizeof(float));
 	}
 	
-	std::cout << "Create Encoder input tensor ... " << std::endl;
+	std::cout << "=> Create Encoder input tensor." << std::endl;
 
 	Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
 		memory_info_handler, input_bgr_value_handler.data(),
 		target_tensor_size, encoder_input_node_dims.at(0).data(),
 		encoder_input_node_dims.at(0).size());
+
 
 	assert(input_tensor.IsTensor());
 
@@ -101,8 +103,13 @@ Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image) throw (std::runtime_
 std::vector<Ort::Value> SAMOnnxRunner::Encoder_BuildEmbedding(Ort::Value* input_tensors) throw (std::runtime_error)
 {
 	std::cout << "Encoder build image embedding start ... " << std::endl;
-
 	auto start_time = std::chrono::steady_clock::now();
+	
+	/*std::cout << "encoder_num_inputs : " <<  encoder_num_inputs << std::endl;
+	std::cout << "encoder_input_node_names.size() : " << encoder_input_node_names.size() << std::endl;
+	std::cout << "encoder_num_outputs : " << encoder_num_outputs << std::endl;
+	std::cout << "encoder_output_node_names.size() : " << encoder_output_node_names.size() << std::endl;*/
+
 	std::vector<Ort::Value> output_tensors = EncoderSession->Run(
 		Ort::RunOptions{nullptr} , encoder_input_node_names.data() , 
 		input_tensors, encoder_num_inputs, encoder_output_node_names.data(), 
@@ -112,7 +119,7 @@ std::vector<Ort::Value> SAMOnnxRunner::Encoder_BuildEmbedding(Ort::Value* input_
 	
 	std::cout << "Encoder build image embedding finish ... " << std::endl;
 	std::cout << "Encoder build embedding cost time : " << \
-		std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << " ms" << std::endl;
+	std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << " ms" << std::endl;
 	
 
 	return output_tensors;
@@ -191,7 +198,7 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 #endif // _WIN32
 
 	// 创建Session并加载模型进内存
-	std::cout << "=> Using Onnxruntime C++ API" << std::endl;
+	std::cout << "=> Using Onnxruntime C++ API." << std::endl;
 	std::cout << "Building SegmentAnything Model Encoder ... " << std::endl;
 	EncoderSession = new Ort::Session(env , encoder_modelpath , session_options);
 	std::cout << "Building SegmentAnything Model Decoder ... " << std::endl;
@@ -205,27 +212,40 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 	encoder_num_inputs = EncoderSession->GetInputCount(); 	// Encoder
 	encoder_num_outputs = EncoderSession->GetOutputCount();
 
-	decoder_num_inputs = DecoderSession->GetInputCount(); // Decoder
-	decoder_num_outputs = DecoderSession->GetOutputCount();
-
 	std::cout << "Encoder inputs num : " << encoder_num_inputs << " outputs num : " << encoder_num_outputs << std::endl;
-	std::cout << "Decoder inputs num : " << decoder_num_inputs << " outputs num : " << decoder_num_outputs << std::endl;
 
 	encoder_input_node_names.resize(encoder_num_inputs);
 	encoder_output_node_names.resize(encoder_num_outputs);
 
+
 	// 原有的GetInputName和GetOutputName方法已经弃用并替换成GetInputNameAllocated()与GetOutputNameAllocated()
+
+	// OnnxRuntime1.13.x版本以后，GetInputName类似的函数存在泄露的问题
+	// 新版api的返回值是一个unique_ptr指针，这就意味着他使用一次时候就被销毁了,用向量将GetInputNameAllocated结果保存下来
+
 	std::cout << "Building Encoder num_inputs and output node nams and dims ..." << std::endl;
 	for (unsigned int i = 0 ; i < encoder_num_inputs ; i++)
-	{
-		Ort::AllocatedStringPtr input_name = EncoderSession->GetInputNameAllocated(i , allocator);
-		encoder_input_node_names.push_back(input_name.get());
+	{	
+		Ort::AllocatorWithDefaultOptions allocator;
+		In_AllocatedStringPtr.push_back(EncoderSession->GetInputNameAllocated(i, allocator));
+		encoder_input_node_names[i] = (In_AllocatedStringPtr.at(i).get());
+		Ort::TypeInfo input_type_info = EncoderSession->GetInputTypeInfo(i);
+		auto input_tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
+		auto input_dims = input_tensor_info.GetShape();
+		encoder_input_node_dims.push_back(input_dims);
+		// org
+		/*Ort::AllocatedStringPtr input_name = EncoderSession->GetInputNameAllocated(i , allocator);
+		encoder_input_node_names.push_back(input_name.get());*/
 	}
 
 	for (unsigned int i = 0; i < encoder_num_outputs; i++)
 	{
-		Ort::AllocatedStringPtr output_name = EncoderSession->GetOutputNameAllocated(i, allocator);
-		encoder_output_node_names.push_back(output_name.get());
+		Ort::AllocatorWithDefaultOptions allocator;
+		Out_AllocatedStringPtr.push_back(EncoderSession->GetOutputNameAllocated(i, allocator));
+		encoder_output_node_names[i] = (Out_AllocatedStringPtr.at(i).get());
+		// org
+		/*Ort::AllocatedStringPtr output_name = EncoderSession->GetOutputNameAllocated(i, allocator);
+		encoder_output_node_names.push_back(output_name.get());*/
 
 		Ort::TypeInfo type_info = EncoderSession->GetOutputTypeInfo(i);
 		auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
@@ -233,8 +253,16 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 		encoder_output_node_dims.push_back(output_shape);
 	}
 
+	// ******************************************************* //
+
+	decoder_num_inputs = DecoderSession->GetInputCount(); // Decoder
+	decoder_num_outputs = DecoderSession->GetOutputCount();
+
+	std::cout << "Decoder inputs num : " << decoder_num_inputs << " outputs num : " << decoder_num_outputs << std::endl;
+
 	decoder_input_node_dims.resize(decoder_num_inputs);
 	decoder_output_node_names.resize(decoder_num_outputs);
+
 
 	std::cout << "Building Decoder num_inputs and output node nams and dims ..." << std::endl;
 	for (unsigned int i = 0; i < decoder_num_inputs; i++)

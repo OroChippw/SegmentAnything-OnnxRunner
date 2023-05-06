@@ -74,6 +74,8 @@ private:
 	// input value handlers
 	std::vector<float> input_bgr_value_handler;
 
+	std::vector<Ort::AllocatedStringPtr>In_AllocatedStringPtr;
+	std::vector<Ort::AllocatedStringPtr>Out_AllocatedStringPtr;
 	/* 2023.05.05
 	* TODO : 封装归一化过程
 	*/
