@@ -3,6 +3,12 @@
 #include <opencv2/opencv.hpp>
 #include <onnxruntime_cxx_api.h>
 
+struct ClickInfo
+{
+	cv::Point pt;
+	bool positive;
+};
+
 std::tuple<int , int> GetPreProcessShape(int old_h , int old_w , int long_side_length)
 {
 	double scale = long_side_length * 1.0 / MAX(old_h , old_w);
@@ -12,7 +18,7 @@ std::tuple<int , int> GetPreProcessShape(int old_h , int old_w , int long_side_l
 	return newShape;
 }
 
-cv::Mat ResizeLongestSide(int encoder_input_size, cv::Mat Image)
+cv::Mat ResizeLongestSide_apply_image(cv::Mat Image , int encoder_input_size)
 {
 	cv::Mat resizeImage;
 	const unsigned int h = Image.rows;
@@ -26,3 +32,13 @@ cv::Mat ResizeLongestSide(int encoder_input_size, cv::Mat Image)
 	
 	return resizeImage;
 }
+
+ClickInfo ResizeLongestSide_apply_coord(cv::Mat Image , ClickInfo clickinfo , int encoder_input_size)
+{
+	const unsigned int h = Image.rows;
+	const unsigned int w = Image.cols;
+	std::tuple<int, int> newShape = GetPreProcessShape(h, w, encoder_input_size);
+
+	return clickinfo;
+}
+

@@ -33,6 +33,9 @@ struct ClickInfo
 class SAMOnnxRunner 
 {
 private:
+	// Image Eembedding
+	std::vector<Ort::Value> image_embedding;
+
 	// Encoder Settings Params
 	bool InitEncoder;
 	int EncoderInputSize = 1024;
@@ -85,7 +88,7 @@ protected:
 
 	cv::Mat Image_PreProcess(cv::Mat srcImage);
 	Ort::Value Encoder_PreProcess(cv::Mat Image);
-	void Decoder_PreProcess();
+	void Decoder_PreProcess(cv::Mat Image , ClickInfo clickinfo);
 
 	std::vector<Ort::Value> Encoder_BuildEmbedding(Ort::Value* input_tensors);
 	void Decoder_Inference();

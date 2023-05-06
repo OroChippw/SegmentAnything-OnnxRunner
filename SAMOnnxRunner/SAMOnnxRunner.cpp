@@ -30,7 +30,7 @@ cv::Mat SAMOnnxRunner::Image_PreProcess(cv::Mat srcImage)
 	return rgbImage;
 }
 
-Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image)
+Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image) throw (std::runtime_error)
 {
 	// => Preprocess for encoder
 	// Meta AI training encoder with a resolution of 1024 * 1024
@@ -40,7 +40,7 @@ Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image)
 	const unsigned int channels = Image.channels();
 	
 	std::cout << "Transforms image by ResizeLongestSide ... " << std::endl;
-	cv::Mat resizeImage = ResizeLongestSide(EncoderInputSize , Image);
+	cv::Mat resizeImage = ResizeLongestSide_apply_image(Image , EncoderInputSize);
 	
 	 // Normalization
 	resizeImage.convertTo(resizeImage, CV_32FC3, 1.0f / 255.0f, 0.f);
@@ -93,7 +93,6 @@ Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image)
 		target_tensor_size, encoder_input_node_dims.at(0).data(),
 		encoder_input_node_dims.at(0).size());
 
-
 	assert(input_tensor.IsTensor());
 
 	return input_tensor;
@@ -125,8 +124,9 @@ std::vector<Ort::Value> SAMOnnxRunner::Encoder_BuildEmbedding(Ort::Value* input_
 	return output_tensors;
 }
 
-void SAMOnnxRunner::Decoder_PreProcess()
+void SAMOnnxRunner::Decoder_PreProcess(cv::Mat Image, ClickInfo clickinfo) throw (std::runtime_error)
 {
+	ClickInfo applyCoords = ResizeLongestSide_apply_coord(Image, clickinfo, EncoderInputSize);
 
 }
 
@@ -141,7 +141,7 @@ void SAMOnnxRunner::Decoder_Inference()
 
 void SAMOnnxRunner::Encoder_PostProcess()
 {
-
+	// 编码器暂时不需要进行后处理，直接将embedding输入解码器配合点击事件即可
 }
 
 void SAMOnnxRunner::Decoder_PostProcess()
@@ -160,11 +160,11 @@ void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , cv::Mat srcImage , 
 	{
 		std::cout << "InitEncoder is false , Preprocess before encoder image embedding ... " << std::endl;
 		auto encoder_input_tensors = Encoder_PreProcess(rgbImage);
-
-		auto image_embeddings = Encoder_BuildEmbedding(&encoder_input_tensors);
-		
+		auto encoder_output_tensors = Encoder_BuildEmbedding(&encoder_input_tensors);
+		image_embedding = encoder_output_tensors;
 		InitEncoder = true;
 	}
+	Decoder_PreProcess(rgbImage , clickInfo);
 
 }
 
