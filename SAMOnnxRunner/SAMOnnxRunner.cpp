@@ -69,34 +69,53 @@ Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image) throw (std::runtime_
 	std::vector<cv::Mat> mat_channels;
 	cv::split(paddingImage, mat_channels);
 
-	// C * H * W
-	for (unsigned int i = 0; i < channels; i++)
+	int flag = 1;
+	if (flag == 1)
 	{
-		std::memcpy(input_bgr_value_handler.data() + i * (target_height * target_width),
-			mat_channels.at(i).data, target_height * target_width * sizeof(float));
+		// C * H * W
+		for (unsigned int i = 0; i < channels; i++)
+			{
+				std::memcpy(input_bgr_value_handler.data() + i * (target_height * target_width),
+					mat_channels.at(i).data, target_height * target_width * sizeof(float));
+			}
 	}
-	std::cout << "Create Encoder input tensor ... " << std::endl;
-	Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-		memory_info_handler , input_bgr_value_handler.data() ,
-		target_tensor_size , encoder_input_node_dims.at(0).data() ,
-		encoder_input_node_dims.at(0).size());
+	else
+	{
+		// H * W * C
+		std::memcpy(input_bgr_value_handler.data(), paddingImage.data, target_tensor_size * sizeof(float));
+	}
 	
+	std::cout << "Create Encoder input tensor ... " << std::endl;
+
+	Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+		memory_info_handler, input_bgr_value_handler.data(),
+		target_tensor_size, encoder_input_node_dims.at(0).data(),
+		encoder_input_node_dims.at(0).size());
+
 	assert(input_tensor.IsTensor());
 
 	return input_tensor;
 }
 
 
-Ort::Value SAMOnnxRunner::Encoder_BuildEmbedding(Ort::Value input_tensor)
+std::vector<Ort::Value> SAMOnnxRunner::Encoder_BuildEmbedding(Ort::Value* input_tensors) throw (std::runtime_error)
 {
+	std::cout << "Encoder build image embedding start ... " << std::endl;
+
 	auto start_time = std::chrono::steady_clock::now();
-	//this->EncoderSession->Run(
-	//	Ort::RunOptions{nullptr} , 
-	//);
+	std::vector<Ort::Value> output_tensors = EncoderSession->Run(
+		Ort::RunOptions{nullptr} , encoder_input_node_names.data() , 
+		input_tensors, encoder_num_inputs, encoder_output_node_names.data(), 
+		encoder_num_outputs
+	);
 	auto end_time = std::chrono::steady_clock::now();
+	
+	std::cout << "Encoder build image embedding finish ... " << std::endl;
 	std::cout << "Encoder build embedding cost time : " << \
 		std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << " ms" << std::endl;
-	return input_tensor;
+	
+
+	return output_tensors;
 }
 
 void SAMOnnxRunner::Decoder_PreProcess()
@@ -125,12 +144,18 @@ void SAMOnnxRunner::Decoder_PostProcess()
 
 void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , cv::Mat srcImage , ClickInfo clickInfo)
 {
+	if (srcImage.empty())
+	{
+		return;
+	}
 	cv::Mat rgbImage = Image_PreProcess(srcImage);
 	if (!InitEncoder)
 	{
 		std::cout << "InitEncoder is false , Preprocess before encoder image embedding ... " << std::endl;
-		Ort::Value encoder_input_tensor = Encoder_PreProcess(rgbImage);
-		Ort::Value image_embeddings = Encoder_BuildEmbedding(std::move(encoder_input_tensor));
+		auto encoder_input_tensors = Encoder_PreProcess(rgbImage);
+
+		auto image_embeddings = Encoder_BuildEmbedding(&encoder_input_tensors);
+		
 		InitEncoder = true;
 	}
 

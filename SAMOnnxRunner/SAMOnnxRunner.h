@@ -85,7 +85,7 @@ protected:
 	Ort::Value Encoder_PreProcess(cv::Mat Image);
 	void Decoder_PreProcess();
 
-	Ort::Value Encoder_BuildEmbedding(Ort::Value input_tensor);
+	std::vector<Ort::Value> Encoder_BuildEmbedding(Ort::Value* input_tensors);
 	void Decoder_Inference();
 
 	void Encoder_PostProcess();
