@@ -76,9 +76,13 @@ private:
 	
 	// input value handlers
 	std::vector<float> input_bgr_value_handler;
+	std::vector<float> input_coord_value_handler;
+	std::vector<float> input_label_value_handler;
 
-	std::vector<Ort::AllocatedStringPtr>In_AllocatedStringPtr;
-	std::vector<Ort::AllocatedStringPtr>Out_AllocatedStringPtr;
+	std::vector<Ort::AllocatedStringPtr>Encoder_In_AllocatedStringPtr;
+	std::vector<Ort::AllocatedStringPtr>Encoder_Out_AllocatedStringPtr;
+	std::vector<Ort::AllocatedStringPtr>Decoder_In_AllocatedStringPtr;
+	std::vector<Ort::AllocatedStringPtr>Decoder_Out_AllocatedStringPtr;
 	/* 2023.05.05
 	* TODO : 封装归一化过程
 	*/
@@ -88,12 +92,12 @@ protected:
 
 	cv::Mat Image_PreProcess(cv::Mat srcImage);
 	Ort::Value Encoder_PreProcess(cv::Mat Image);
-	void Decoder_PreProcess(cv::Mat Image , ClickInfo clickinfo);
-
 	std::vector<Ort::Value> Encoder_BuildEmbedding(Ort::Value* input_tensors);
-	void Decoder_Inference();
-
 	void Encoder_PostProcess();
+
+	void Decoder_PreProcess1(cv::Mat Image, ClickInfo clickinfo) throw (std::runtime_error) {};
+	std::vector<Ort::Value> Decoder_PreProcess(cv::Mat Image , ClickInfo clickinfo);
+	std::vector<Ort::Value> Decoder_Inference(std::vector<Ort::Value>* input_tensors);
 	void Decoder_PostProcess();
 
 
