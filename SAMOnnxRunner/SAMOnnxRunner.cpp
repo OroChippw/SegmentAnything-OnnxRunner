@@ -141,64 +141,60 @@ std::vector<Ort::Value> SAMOnnxRunner::Decoder_PreProcess(cv::Mat Image, ClickIn
 
 	std::vector<Ort::Value> output_tensors;
 
-	output_tensors.push_back(std::move(image_embedding[0]));
+	output_tensors.emplace_back(std::move(image_embedding[0]));
 
 	std::cout << "Building decoder input tensors [point coords] ..." << std::endl;
-	auto memory_info_point_coords = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 	std::array<float , 2> point_coords = {float(applyCoords.pt.x) , float(applyCoords.pt.y)};
 	
 	auto point_coords_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_point_coords, point_coords.data() , point_coords.size() ,
+		memory_info_handler, point_coords.data() , point_coords.size() ,
 		decoder_input_node_dims.at(1).data() , decoder_input_node_dims.at(1).size()
 	);
 	assert(point_coords_tensors.IsTensor());
-	output_tensors.push_back(std::move(point_coords_tensors));
+	output_tensors.emplace_back(std::move(point_coords_tensors));
 
 
 	std::cout << "Building decoder input tensors [point labels] ..." << std::endl;
-	auto memory_info_point_labels = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 	std::array<float , 1> point_labels = { float(int(applyCoords.positive)) };
+
 	auto point_labels_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_point_labels, point_labels.data(), point_labels.size(),
+		memory_info_handler, point_labels.data(), point_labels.size(),
 		decoder_input_node_dims.at(2).data(), decoder_input_node_dims.at(2).size()
 	);
 	assert(point_labels_tensors.IsTensor());
-	output_tensors.push_back(std::move(point_labels_tensors));
+	output_tensors.emplace_back(std::move(point_labels_tensors));
 
 
 	std::cout << "Building decoder input tensors [mask inputs] ..." << std::endl;
-	auto memory_info_mask_inputs = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 	std::array<float, 256 * 256> mask_inputs{};
 	auto mask_inputs_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_mask_inputs, mask_inputs.data(), mask_inputs.size(),
+		memory_info_handler, mask_inputs.data(), mask_inputs.size(),
 		decoder_input_node_dims.at(3).data(), decoder_input_node_dims.at(3).size()
 	);
 	assert(mask_inputs_tensors.IsTensor());
-	output_tensors.push_back(std::move(mask_inputs_tensors));
+	output_tensors.emplace_back(std::move(mask_inputs_tensors));
 
 
 	std::cout << "Building decoder input tensors [has_mask_input] ..." << std::endl;
-	auto memory_info_has_mask_input = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 	std::array<float, 1> has_mask_input = {0};
 	auto has_mask_inputs_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_has_mask_input, has_mask_input.data(), has_mask_input.size(),
+		memory_info_handler, has_mask_input.data(), has_mask_input.size(),
 		decoder_input_node_dims.at(4).data(), decoder_input_node_dims.at(4).size()
 	);
 	assert(has_mask_inputs_tensors.IsTensor());
-	output_tensors.push_back(std::move(has_mask_inputs_tensors));
+	output_tensors.emplace_back(std::move(has_mask_inputs_tensors));
 	
 	std::cout << "Building decoder input tensors [orig_im_size] ..." << std::endl;
-	auto memory_info_orig_im_size = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
-
-	std::vector<float>  orig_im_size = {float(Image.cols) , float(Image.rows)};
+	std::vector<float>  orig_im_size = {float(Image.rows) , float(Image.cols)};
 
 	auto orig_im_size_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_orig_im_size, orig_im_size.data(), orig_im_size.size(),
+		memory_info_handler, orig_im_size.data(), orig_im_size.size(),
 		decoder_input_node_dims.at(5).data(), decoder_input_node_dims.at(5).size()
 	);
 
 	assert(orig_im_size_tensors.IsTensor());
-	output_tensors.push_back(std::move(orig_im_size_tensors));
+	output_tensors.emplace_back(std::move(orig_im_size_tensors));
+
 
 	return output_tensors;
 
@@ -230,9 +226,60 @@ void SAMOnnxRunner::Encoder_PostProcess()
 	// 编码器暂时不需要进行后处理，直接将embedding输入解码器配合点击事件即可
 }
 
-void SAMOnnxRunner::Decoder_PostProcess()
+cv::Mat SAMOnnxRunner::Decoder_PostProcess(std::vector<Ort::Value>* input_tensors) throw (std::runtime_error)
 {
+	std::cout << "=> Decoder postprocess output tensors ..." << std::endl;
+	
+	Ort::Value& masks = input_tensors->at(0);
+	Ort::Value& iou_predictions = input_tensors->at(1);
+	Ort::Value& low_res_masks = input_tensors->at(2);
 
+	auto mask_dims = masks.GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
+
+	auto iou_pred_dims = iou_predictions.GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
+
+	auto low_res_dims = low_res_masks.GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
+
+
+	const unsigned int X0 = mask_dims.at(0);
+	const unsigned int X1 = mask_dims.at(1);
+	const unsigned int X2 = mask_dims.at(2);
+	const unsigned int X3 = mask_dims.at(3);
+
+	std::cout << "X0 : " << X0 << " X1 : " << X1 << std::endl;
+	std::cout << "X2 : " << X2 << " X3 : " << X3 << std::endl;
+
+	//const unsigned int Y0 = iou_pred_dims.at(0); Something wrong
+	const unsigned int Y1 = iou_pred_dims.at(1);
+
+	std::cout << "Y1 : " << Y1 << std::endl;
+
+
+	const unsigned int Z0 = low_res_dims.at(0);
+	const unsigned int Z1 = low_res_dims.at(1);
+	const unsigned int Z2 = low_res_dims.at(2);
+	const unsigned int Z3 = low_res_dims.at(3);
+
+	std::cout << "Z0 : " << Z0 << " Z1 : " << Z1 << std::endl;
+	std::cout << "Z2 : " << Z2 << " Z3 : " << Z3 << std::endl;
+
+
+	const unsigned int height = mask_dims.at(2);
+	const unsigned int width = mask_dims.at(3);
+	const unsigned int channel_step = height * width;
+
+	std::cout << "Get output masks info : width : " << width \
+		<< " height : " << height << " channel_step : " << channel_step << std::endl;
+
+	float* mask_ptr = masks.GetTensorMutableData<float>();
+
+	
+
+	cv::Mat mask(height , width , CV_32FC1 , mask_ptr);
+
+	
+
+	return mask;
 }
 
 void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , cv::Mat srcImage , ClickInfo clickInfo)
@@ -253,6 +300,18 @@ void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , cv::Mat srcImage , 
 	
 	auto decoder_input_tensors = std::move(Decoder_PreProcess(srcImage, clickInfo));
 	auto decoder_output_tensors = std::move(Decoder_Inference(&decoder_input_tensors));
+
+	auto result = Decoder_PostProcess(&decoder_output_tensors);
+	if (result.empty())
+	{
+		std::cout << "No result !" << std::endl;
+		return;
+	}
+
+	std::string save_path = cfg.SaveDir + "/result.png";
+
+	cv::imwrite(save_path, result);
+	std::cout << "=> Result save as : " << save_path << std::endl;
 
 }
 
@@ -350,30 +409,25 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 	for (unsigned int i = 0; i < decoder_num_inputs; i++)
 	{
 		Ort::AllocatorWithDefaultOptions allocator;
-		Decoder_In_AllocatedStringPtr.push_back(DecoderSession->GetInputNameAllocated(i, allocator));
+		Decoder_In_AllocatedStringPtr.emplace_back(DecoderSession->GetInputNameAllocated(i, allocator));
 		
 		decoder_input_node_names[i] = (Decoder_In_AllocatedStringPtr.at(i).get());
 		Ort::TypeInfo input_type_info = DecoderSession->GetInputTypeInfo(i);
 		auto input_tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
 		auto input_dims = input_tensor_info.GetShape();
-		decoder_input_node_dims.push_back(input_dims);
+		decoder_input_node_dims.emplace_back(input_dims);
 	}
-
-	printf("1");
 
 	for (unsigned int i = 0; i < decoder_num_outputs; i++)
 	{
 		Ort::AllocatorWithDefaultOptions allocator;
-		Decoder_Out_AllocatedStringPtr.push_back(DecoderSession->GetOutputNameAllocated(i, allocator));
+		Decoder_Out_AllocatedStringPtr.emplace_back(DecoderSession->GetOutputNameAllocated(i, allocator));
 		decoder_output_node_names[i] = (Decoder_Out_AllocatedStringPtr.at(i).get());
-		// org
-		/*Ort::AllocatedStringPtr output_name = EncoderSession->GetOutputNameAllocated(i, allocator);
-		encoder_output_node_names.push_back(output_name.get());*/
 
 		Ort::TypeInfo type_info = DecoderSession->GetOutputTypeInfo(i);
 		auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
 		auto output_shape = tensor_info.GetShape();
-		decoder_output_node_dims.push_back(output_shape);
+		decoder_output_node_dims.emplace_back(output_shape);
 	}
 
 

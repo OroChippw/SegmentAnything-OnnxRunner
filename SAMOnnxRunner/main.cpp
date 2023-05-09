@@ -9,11 +9,13 @@ int main()
     std::string encoder_model_path = "E:/OroChiLab/segment-anything-main/model_weights/withEncoder/vit_b/encoder.onnx";
     std::string decoder_model_path = "E:/OroChiLab/segment-anything-main/model_weights/withEncoder/vit_b/decoder.onnx";
     std::string image_path = "E:/OroChiLab/Data/NailsJpgfile/images/1_1-2.jpg";
+    std::string save_dir = "E:/OroChiLab/Data/NailsJpgfile/images/savedir/";
     double threshold = 0.95;
     
     Configuration cfg;
     cfg.EncoderModelPath = encoder_model_path;
     cfg.DecoderModelPath = decoder_model_path;
+    cfg.SaveDir = save_dir;
     cfg.SegThreshold = threshold;
 
     // Init Onnxruntime Env

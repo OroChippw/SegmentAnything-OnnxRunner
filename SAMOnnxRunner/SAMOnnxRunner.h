@@ -97,7 +97,7 @@ protected:
 
 	std::vector<Ort::Value> Decoder_PreProcess(cv::Mat Image , ClickInfo clickinfo);
 	std::vector<Ort::Value> Decoder_Inference(std::vector<Ort::Value>* input_tensors);
-	void Decoder_PostProcess();
+	cv::Mat Decoder_PostProcess(std::vector<Ort::Value>* input_tensors);
 
 
 
