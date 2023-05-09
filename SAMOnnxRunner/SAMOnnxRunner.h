@@ -95,7 +95,6 @@ protected:
 	std::vector<Ort::Value> Encoder_BuildEmbedding(Ort::Value* input_tensors);
 	void Encoder_PostProcess();
 
-	void Decoder_PreProcess1(cv::Mat Image, ClickInfo clickinfo) throw (std::runtime_error) {};
 	std::vector<Ort::Value> Decoder_PreProcess(cv::Mat Image , ClickInfo clickinfo);
 	std::vector<Ort::Value> Decoder_Inference(std::vector<Ort::Value>* input_tensors);
 	void Decoder_PostProcess();

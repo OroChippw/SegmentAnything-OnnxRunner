@@ -23,8 +23,8 @@ int main()
     ClickInfo clickinfo;
     clickinfo.positive = true;
     clickinfo.pt = cv::Point(1156,550);
-    cv::Mat srcImage = cv::imread(image_path , CV_8UC3);
-    
+    cv::Mat srcImage = cv::imread(image_path);
+
     Segmentator.InferenceSingleImage(cfg , srcImage , clickinfo);
 
     Segmentator.ResetInitEncoder();

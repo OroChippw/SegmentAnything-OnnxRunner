@@ -22,8 +22,8 @@ cv::Mat ResizeLongestSide_apply_image(cv::Mat Image , int encoder_input_size)
 	const unsigned int w = Image.cols;
 	std::tuple<int, int> newShape = GetPreProcessShape(h , w , encoder_input_size);
 
-	cv::resize(Image , resizeImage , cv::Size(std::get<0>(newShape) , std::get<1>(newShape)) , cv::INTER_AREA);
-	
+	cv::resize(Image , resizeImage , cv::Size(std::get<1>(newShape) , std::get<0>(newShape)) , cv::INTER_AREA);
+
 	return resizeImage;
 }
 
@@ -33,11 +33,11 @@ ClickInfo ResizeLongestSide_apply_coord(cv::Mat Image , ClickInfo clickinfo , in
 	const unsigned int w = Image.cols;
 	std::tuple<int, int> newShape = GetPreProcessShape(h, w, encoder_input_size);
 
-	int new_w = std::get<0>(newShape);
-	int new_h = std::get<1>(newShape);
+	float new_w = std::get<1>(newShape);
+	float new_h = std::get<0>(newShape);
 
-	clickinfo.pt.x = clickinfo.pt.x * (new_w / w);
-	clickinfo.pt.y = clickinfo.pt.y * (new_h / h);
+	clickinfo.pt.x = clickinfo.pt.x * float(new_w / w);
+	clickinfo.pt.y = clickinfo.pt.y * float(new_h / h);
 
 	return clickinfo;
 }

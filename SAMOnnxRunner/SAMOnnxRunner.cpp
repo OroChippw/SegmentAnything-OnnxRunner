@@ -101,7 +101,7 @@ Ort::Value SAMOnnxRunner::Encoder_PreProcess(cv::Mat Image) throw (std::runtime_
 
 std::vector<Ort::Value> SAMOnnxRunner::Encoder_BuildEmbedding(Ort::Value* input_tensors) throw (std::runtime_error)
 {
-	std::cout << "Encoder build image embedding start ... " << std::endl;
+	std::cout << "=> Encoder build image embedding start ... " << std::endl;
 	auto start_time = std::chrono::steady_clock::now();
 	
 	std::vector<Ort::Value> output_tensors = EncoderSession->Run(
@@ -121,7 +121,8 @@ std::vector<Ort::Value> SAMOnnxRunner::Encoder_BuildEmbedding(Ort::Value* input_
 std::vector<Ort::Value> SAMOnnxRunner::Decoder_PreProcess(cv::Mat Image, ClickInfo clickinfo) throw (std::runtime_error)
 {
 	ClickInfo applyCoords = ResizeLongestSide_apply_coord(Image, clickinfo, EncoderInputSize);
-	
+	std::cout << "(applyCoords.pt.x) : " << (applyCoords.pt.x) << " (applyCoords.pt.y) : " << (applyCoords.pt.y) << std::endl;
+
 	/*
 	* TODO 解码器几个输入tensor的大小
 	* 验证是否可以使用通用的memory_info_handler
@@ -145,6 +146,7 @@ std::vector<Ort::Value> SAMOnnxRunner::Decoder_PreProcess(cv::Mat Image, ClickIn
 	std::cout << "Building decoder input tensors [point coords] ..." << std::endl;
 	auto memory_info_point_coords = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 	std::array<float , 2> point_coords = {float(applyCoords.pt.x) , float(applyCoords.pt.y)};
+	
 	auto point_coords_tensors = Ort::Value::CreateTensor<float>(
 		memory_info_point_coords, point_coords.data() , point_coords.size() ,
 		decoder_input_node_dims.at(1).data() , decoder_input_node_dims.at(1).size()
@@ -163,15 +165,17 @@ std::vector<Ort::Value> SAMOnnxRunner::Decoder_PreProcess(cv::Mat Image, ClickIn
 	assert(point_labels_tensors.IsTensor());
 	output_tensors.push_back(std::move(point_labels_tensors));
 
+
 	std::cout << "Building decoder input tensors [mask inputs] ..." << std::endl;
 	auto memory_info_mask_inputs = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
-	std::array<float, 256 * 256> mask_inputs = {0};
+	std::array<float, 256 * 256> mask_inputs{};
 	auto mask_inputs_tensors = Ort::Value::CreateTensor<float>(
 		memory_info_mask_inputs, mask_inputs.data(), mask_inputs.size(),
 		decoder_input_node_dims.at(3).data(), decoder_input_node_dims.at(3).size()
 	);
 	assert(mask_inputs_tensors.IsTensor());
 	output_tensors.push_back(std::move(mask_inputs_tensors));
+
 
 	std::cout << "Building decoder input tensors [has_mask_input] ..." << std::endl;
 	auto memory_info_has_mask_input = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
@@ -185,9 +189,9 @@ std::vector<Ort::Value> SAMOnnxRunner::Decoder_PreProcess(cv::Mat Image, ClickIn
 	
 	std::cout << "Building decoder input tensors [orig_im_size] ..." << std::endl;
 	auto memory_info_orig_im_size = Ort::MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
-	const unsigned int im_size = Image.rows * Image.cols;
-	std::vector<float>  orig_im_size = {0};
-	orig_im_size.resize(im_size);
+
+	std::vector<float>  orig_im_size = {float(Image.cols) , float(Image.rows)};
+
 	auto orig_im_size_tensors = Ort::Value::CreateTensor<float>(
 		memory_info_orig_im_size, orig_im_size.data(), orig_im_size.size(),
 		decoder_input_node_dims.at(5).data(), decoder_input_node_dims.at(5).size()
@@ -201,19 +205,10 @@ std::vector<Ort::Value> SAMOnnxRunner::Decoder_PreProcess(cv::Mat Image, ClickIn
 }
 
 
-std::vector<Ort::Value> SAMOnnxRunner::Decoder_Inference(std::vector<Ort::Value>* input_tensors)
+std::vector<Ort::Value> SAMOnnxRunner::Decoder_Inference(std::vector<Ort::Value>* input_tensors) throw (std::runtime_error)
 {
-	std::cout << "Decoder inference start ... " << std::endl;
+	std::cout << "=> Decoder inference start ... " << std::endl;
 	auto start_time = std::chrono::steady_clock::now();
-
-	std::cout << "-------------------------------------" << std::endl;
-	std::cout << "decoder_input_node_names : " << decoder_input_node_names.size() << std::endl;
-	std::cout << "input_tensors : " << input_tensors->size() << std::endl;
-	std::cout << "decoder_num_inputs : " << decoder_num_inputs << std::endl;
-	std::cout << "decoder_output_node_names : " << decoder_output_node_names.size() << std::endl;
-	std::cout << "decoder_num_outputs : " << decoder_num_outputs << std::endl;
-	std::cout << "-------------------------------------" << std::endl;
-
 
 	std::vector<Ort::Value> output_tensors = DecoderSession->Run(
 		Ort::RunOptions{nullptr} , decoder_input_node_names.data() , 
@@ -222,7 +217,8 @@ std::vector<Ort::Value> SAMOnnxRunner::Decoder_Inference(std::vector<Ort::Value>
 	);
 	
 	auto end_time = std::chrono::steady_clock::now();
-	std::cout << "Decoder inference start ... " << std::endl;
+
+	std::cout << "Decoder inference finish ... " << std::endl;
 	std::cout << "Decoder Inference cost time : " << \
 		std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << " ms" << std::endl;
 	
@@ -241,6 +237,7 @@ void SAMOnnxRunner::Decoder_PostProcess()
 
 void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , cv::Mat srcImage , ClickInfo clickInfo)
 {
+	std::cout << "Image info : srcImage width : " << srcImage.cols << " srcImage height :  " << srcImage.rows << std::endl;
 	if (srcImage.empty())
 	{
 		return;
@@ -253,10 +250,9 @@ void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , cv::Mat srcImage , 
 		image_embedding = std::move(Encoder_BuildEmbedding(&encoder_input_tensors));
 		InitEncoder = true;
 	}
-	auto decoder_input_tensors = std::move(Decoder_PreProcess(rgbImage , clickInfo));
-	std::cout << "decoder_input_tensors size : " << decoder_input_tensors.size() << std::endl;
-
-	Decoder_Inference(&decoder_input_tensors);
+	
+	auto decoder_input_tensors = std::move(Decoder_PreProcess(srcImage, clickInfo));
+	auto decoder_output_tensors = std::move(Decoder_Inference(&decoder_input_tensors));
 
 }
 
