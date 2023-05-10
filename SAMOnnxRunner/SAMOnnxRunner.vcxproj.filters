@@ -29,5 +29,8 @@
     <ClInclude Include="transform.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

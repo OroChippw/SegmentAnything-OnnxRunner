@@ -3,23 +3,31 @@
 #include <iostream>
 #include<Windows.h>
 #include <chrono>
+#include <random>
 #include <onnxruntime_cxx_api.h>
 //#include <cuda_provider_factory.h>  // 若在GPU环境下运行可以使用cuda进行加速
 
 #include "SAMOnnxRunner.h"
 #include "transform.h"
+#include "utils.h"
 
-wchar_t* multi_Byte_To_Wide_Char(std::string& pKey)
-{
-	// string 转 char*
-	const char* pCStrKey = pKey.c_str();
-	// 第一次调用返回转换后的字符串长度，用于确认为wchar_t*开辟多大的内存空间
-	int pSize = MultiByteToWideChar(CP_OEMCP, 0, pCStrKey, strlen(pCStrKey) + 1, NULL, 0);
-	wchar_t* pWCStrKey = new wchar_t[pSize];
-	// 第二次调用将单字节字符串转换成双字节字符串
-	MultiByteToWideChar(CP_OEMCP, 0, pCStrKey, strlen(pCStrKey) + 1, pWCStrKey, pSize);
-	// 不要忘记在使用完wchar_t*后delete[]释放内存
-	return pWCStrKey;
+
+template<size_t numInputElements>
+std::array<float, numInputElements>* generate_random_input(bool set_zero = false) {
+	std::array<float, numInputElements>* input = new std::array<float, numInputElements>();
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<float> dist(1, 2.0f);
+
+	for (size_t i = 0; i < numInputElements; ++i) {
+		if (set_zero) {
+			(*input)[i] = 1;
+		}
+		else {
+			(*input)[i] = dist(gen);
+		}
+	}
+	return input;
 }
 
 cv::Mat SAMOnnxRunner::Image_PreProcess(cv::Mat srcImage)
@@ -129,72 +137,100 @@ std::vector<Ort::Value> SAMOnnxRunner::Decoder_PreProcess(cv::Mat Image, ClickIn
 	* Reference : https://gist.github.com/tempdeltavalue/2ddf7d3195f336d2a1dd7d5e71e28224
 	*/
 	std::cout << "=> Create Decoder input tensor ..." << std::endl;
+	const size_t maskInputSize = 256 * 256;
+	float inputPointValues[] = { (float)applyCoords.pt.x, (float)applyCoords.pt.y }, inputLabelValues[] = { 1 },
+		maskInputValues[maskInputSize], hasMaskValues[] = { 0 },
+		orig_im_size_values[] = { (float)1080, (float)1920 };
+	memset(maskInputValues, 0, sizeof(maskInputValues));
+
+	int num_points = 1;
+	std::vector<int64_t> inputPointShape = { 1, num_points, 2 }, pointLabelsShape = { 1, num_points },
+		maskInputShape = { 1, 1, 256, 256 }, hasMaskInputShape = { 1 },
+		origImSizeShape = { 2 };
 
 	decoder_input_node_dims = {
 		{1 , 256 , 64 , 64} , // image_embeddings
-		{1 , 1 , 2} , // point_coords
-		{1 , 1} , // point_labels
+		{1 , num_points , 2} , // point_coords
+		{1 , num_points} , // point_labels
 		{1 , 1 , 256 , 256} , // mask_inputs
 		{1} , // has_mask_input
 		{2} , // orig_im_size
 	};
 
+	//std::vector<Ort::Value> output_tensors;
+
+	//output_tensors.emplace_back(std::move(image_embedding[0]));
+
+	//std::cout << "Building decoder input tensors [point coords] ..." << std::endl;
+	//std::array<float , 2> point_coords = {(float)applyCoords.pt.x , (float)applyCoords.pt.y};
+	//
+	//auto point_coords_tensors = Ort::Value::CreateTensor<float>(
+	//	memory_info_handler, point_coords.data() , point_coords.size() ,
+	//	decoder_input_node_dims[1].data(), decoder_input_node_dims[1].size()
+	//);
+	//assert(point_coords_tensors.IsTensor());
+	//output_tensors.emplace_back(std::move(point_coords_tensors));
+
+
+	//std::cout << "Building decoder input tensors [point labels] ..." << std::endl;
+	//std::array<float , 1> point_labels = { float(int(applyCoords.positive)) };
+
+	//auto point_labels_tensors = Ort::Value::CreateTensor<float>(
+	//	memory_info_handler, point_labels.data(), point_labels.size(),
+	//	decoder_input_node_dims[2].data(), decoder_input_node_dims[2].size()
+	//);
+	//assert(point_labels_tensors.IsTensor());
+	//output_tensors.emplace_back(std::move(point_labels_tensors));
+
+
+	//std::cout << "Building decoder input tensors [mask inputs] ..." << std::endl;
+	////std::array<float, 256 * 256> mask_inputs{};
+	//float mask_inputs[256 * 256];
+	//memset(mask_inputs ,0 , sizeof(mask_inputs));
+	//auto mask_inputs_tensors = Ort::Value::CreateTensor<float>(
+	//	memory_info_handler, mask_inputs, 256 * 256,
+	//	decoder_input_node_dims.at(3).data(), decoder_input_node_dims.at(3).size()
+	//);
+	//assert(mask_inputs_tensors.IsTensor());
+	//output_tensors.emplace_back(std::move(mask_inputs_tensors));
+
+
+	//std::cout << "Building decoder input tensors [has_mask_input] ..." << std::endl;
+	//std::array<float, 1> has_mask_input = {0};
+	//auto has_mask_inputs_tensors = Ort::Value::CreateTensor<float>(
+	//	memory_info_handler, has_mask_input.data(), has_mask_input.size(),
+	//	decoder_input_node_dims.at(4).data(), decoder_input_node_dims.at(4).size()
+	//);
+
+	//assert(has_mask_inputs_tensors.IsTensor());
+	//output_tensors.emplace_back(std::move(has_mask_inputs_tensors));
+	//
+	//std::cout << "Building decoder input tensors [orig_im_size] ..." << std::endl;
+	//std::vector<float>  orig_im_size = {float(Image.rows) , float(Image.cols)};
+
+	//auto orig_im_size_tensors = Ort::Value::CreateTensor<float>(
+	//	memory_info_handler, orig_im_size.data(), orig_im_size.size(),
+	//	decoder_input_node_dims.at(5).data(), decoder_input_node_dims.at(5).size()
+	//);
+
+	//assert(orig_im_size_tensors.IsTensor());
+	//output_tensors.emplace_back(std::move(orig_im_size_tensors));
+	/*inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+		memoryInfo, (float*)outputTensorValuesPre.data(), outputTensorValuesPre.size(),
+		outputShapePre.data(), outputShapePre.size()));*/
 	std::vector<Ort::Value> output_tensors;
 
 	output_tensors.emplace_back(std::move(image_embedding[0]));
-
-	std::cout << "Building decoder input tensors [point coords] ..." << std::endl;
-	std::array<float , 2> point_coords = {float(applyCoords.pt.x) , float(applyCoords.pt.y)};
-	
-	auto point_coords_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_handler, point_coords.data() , point_coords.size() ,
-		decoder_input_node_dims.at(1).data() , decoder_input_node_dims.at(1).size()
-	);
-	assert(point_coords_tensors.IsTensor());
-	output_tensors.emplace_back(std::move(point_coords_tensors));
-
-
-	std::cout << "Building decoder input tensors [point labels] ..." << std::endl;
-	std::array<float , 1> point_labels = { float(int(applyCoords.positive)) };
-
-	auto point_labels_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_handler, point_labels.data(), point_labels.size(),
-		decoder_input_node_dims.at(2).data(), decoder_input_node_dims.at(2).size()
-	);
-	assert(point_labels_tensors.IsTensor());
-	output_tensors.emplace_back(std::move(point_labels_tensors));
-
-
-	std::cout << "Building decoder input tensors [mask inputs] ..." << std::endl;
-	std::array<float, 256 * 256> mask_inputs{};
-	auto mask_inputs_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_handler, mask_inputs.data(), mask_inputs.size(),
-		decoder_input_node_dims.at(3).data(), decoder_input_node_dims.at(3).size()
-	);
-	assert(mask_inputs_tensors.IsTensor());
-	output_tensors.emplace_back(std::move(mask_inputs_tensors));
-
-
-	std::cout << "Building decoder input tensors [has_mask_input] ..." << std::endl;
-	std::array<float, 1> has_mask_input = {0};
-	auto has_mask_inputs_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_handler, has_mask_input.data(), has_mask_input.size(),
-		decoder_input_node_dims.at(4).data(), decoder_input_node_dims.at(4).size()
-	);
-	assert(has_mask_inputs_tensors.IsTensor());
-	output_tensors.emplace_back(std::move(has_mask_inputs_tensors));
-	
-	std::cout << "Building decoder input tensors [orig_im_size] ..." << std::endl;
-	std::vector<float>  orig_im_size = {float(Image.rows) , float(Image.cols)};
-
-	auto orig_im_size_tensors = Ort::Value::CreateTensor<float>(
-		memory_info_handler, orig_im_size.data(), orig_im_size.size(),
-		decoder_input_node_dims.at(5).data(), decoder_input_node_dims.at(5).size()
-	);
-
-	assert(orig_im_size_tensors.IsTensor());
-	output_tensors.emplace_back(std::move(orig_im_size_tensors));
-
+	output_tensors.push_back(Ort::Value::CreateTensor<float>(
+		memory_info_handler, inputPointValues, 2, inputPointShape.data(), inputPointShape.size()));
+	output_tensors.push_back(Ort::Value::CreateTensor<float>(
+		memory_info_handler, inputLabelValues, 1, pointLabelsShape.data(), pointLabelsShape.size()));
+	output_tensors.push_back(Ort::Value::CreateTensor<float>(
+		memory_info_handler, maskInputValues, maskInputSize, maskInputShape.data(), maskInputShape.size()));
+	output_tensors.push_back(Ort::Value::CreateTensor<float>(
+		memory_info_handler, hasMaskValues, 1, hasMaskInputShape.data(), hasMaskInputShape.size()));
+	output_tensors.push_back(Ort::Value::CreateTensor<float>(
+		memory_info_handler, orig_im_size_values, 2, origImSizeShape.data(), origImSizeShape.size()));
 
 	return output_tensors;
 
@@ -217,7 +253,7 @@ std::vector<Ort::Value> SAMOnnxRunner::Decoder_Inference(std::vector<Ort::Value>
 	std::cout << "Decoder inference finish ... " << std::endl;
 	std::cout << "Decoder Inference cost time : " << \
 		std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count() << " ms" << std::endl;
-	
+
 	return output_tensors;
 }
 
@@ -226,11 +262,11 @@ void SAMOnnxRunner::Encoder_PostProcess()
 	// 编码器暂时不需要进行后处理，直接将embedding输入解码器配合点击事件即可
 }
 
-cv::Mat SAMOnnxRunner::Decoder_PostProcess(std::vector<Ort::Value>* input_tensors) throw (std::runtime_error)
+std::vector<cv::Mat> SAMOnnxRunner::Decoder_PostProcess(std::vector<Ort::Value>* input_tensors) throw (std::runtime_error)
 {
 	std::cout << "=> Decoder postprocess output tensors ..." << std::endl;
 	
-	Ort::Value& masks = input_tensors->at(0);
+ 	Ort::Value& masks = input_tensors->at(0);
 	Ort::Value& iou_predictions = input_tensors->at(1);
 	Ort::Value& low_res_masks = input_tensors->at(2);
 
@@ -240,18 +276,18 @@ cv::Mat SAMOnnxRunner::Decoder_PostProcess(std::vector<Ort::Value>* input_tensor
 
 	auto low_res_dims = low_res_masks.GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
 
+	const unsigned int Resizemasks_dim_0 = mask_dims.at(0);
+	const unsigned int Resizemasks_dim_1 = mask_dims.at(1);
+	const unsigned int Resizemasks_dim_2 = mask_dims.at(2);
+	const unsigned int Resizemasks_dim_3 = mask_dims.at(3);
 
-	const unsigned int X0 = mask_dims.at(0);
-	const unsigned int X1 = mask_dims.at(1);
-	const unsigned int X2 = mask_dims.at(2);
-	const unsigned int X3 = mask_dims.at(3);
+	std::cout << "Resizemasks_dim_0 : " << Resizemasks_dim_0 << " Resizemasks_dim_1 : " << Resizemasks_dim_1 \
+			  << "Resizemasks_dim_2 : " << Resizemasks_dim_2 << " Resizemasks_dim_3 : " << Resizemasks_dim_3 << std::endl;
 
-	std::cout << "X0 : " << X0 << " X1 : " << X1 << std::endl;
-	std::cout << "X2 : " << X2 << " X3 : " << X3 << std::endl;
-
-	//const unsigned int Y0 = iou_pred_dims.at(0); Something wrong
+	const unsigned int Y0 = iou_pred_dims.at(0); 
 	const unsigned int Y1 = iou_pred_dims.at(1);
 
+	std::cout << "Gemmiou_predictions_dim_0 : " << Y0 << std::endl;
 	std::cout << "Y1 : " << Y1 << std::endl;
 
 
@@ -264,22 +300,34 @@ cv::Mat SAMOnnxRunner::Decoder_PostProcess(std::vector<Ort::Value>* input_tensor
 	std::cout << "Z2 : " << Z2 << " Z3 : " << Z3 << std::endl;
 
 
-	const unsigned int height = mask_dims.at(2);
-	const unsigned int width = mask_dims.at(3);
-	const unsigned int channel_step = height * width;
+	const unsigned int mask_height = mask_dims.at(2);
+	const unsigned int mask_width = mask_dims.at(3);
+	const unsigned int mask_channel_step = mask_height * mask_width;
 
-	std::cout << "Get output masks info : width : " << width \
-		<< " height : " << height << " channel_step : " << channel_step << std::endl;
+	std::cout << "Get output masks info : width : " << mask_width \
+		<< " height : " << mask_height << " channel_step : " << mask_channel_step << std::endl;
 
-	float* mask_ptr = masks.GetTensorMutableData<float>();
+	auto mask_ptr = masks.GetTensorMutableData<float>();
+	auto iou_predictions_ptr = iou_predictions.GetTensorMutableData<float>();
 
-	
 
-	cv::Mat mask(height , width , CV_32FC1 , mask_ptr);
+	std::vector<cv::Mat> masks_list;
 
-	
+	cv::Mat mask(mask_height, mask_width, CV_8UC1);
+	for (int i = 0; i < mask.rows; i++) {
+		for (int j = 0; j < mask.cols; j++) {
+			mask.at<uchar>(i, j) = mask_ptr[i * mask.cols + j] > 0 ? 255 : 0;
+		}
+	}
 
-	return mask;
+	std::cout << *iou_predictions_ptr << std::endl;
+	std::cout << *iou_predictions_ptr++ << std::endl;
+	std::cout << *iou_predictions_ptr++ << std::endl;
+	std::cout << *iou_predictions_ptr++ << std::endl;
+
+	std::cout << masks_list.size() << std::endl;
+
+	return masks_list;
 }
 
 void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , cv::Mat srcImage , ClickInfo clickInfo)
@@ -320,9 +368,9 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 	// 初始化OnnxRuntime运行环境
 	env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "SegmentAnythingModel");
 	session_options = Ort::SessionOptions();
-	session_options.SetInterOpNumThreads(num_threads);
+	session_options.SetInterOpNumThreads(std::thread::hardware_concurrency());
 	// 设置图像优化级别
-	session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+	session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
 	session_options.SetLogSeverityLevel(4);
 
