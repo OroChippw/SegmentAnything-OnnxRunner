@@ -12,7 +12,6 @@ struct Configuration
 	std::string DecoderModelPath;
 	std::string SaveDir;
 	std::string Device;
-	
 };
 
 typedef struct BoxInfo 
@@ -30,14 +29,21 @@ struct ClickInfo
 	bool positive;
 };
 
+struct MatInfo
+{
+	cv::Mat mask;
+	float iou_pred;
+};
+
 class SAMOnnxRunner 
 {
 private:
 	// Image Eembedding
-	std::vector<Ort::Value> image_embedding;
+	//std::vector<Ort::Value> image_embedding;
 
 	// Encoder Settings Params
-	bool InitEncoder;
+	bool InitModelSession = false;
+	bool InitEncoderEmbedding;
 	int EncoderInputSize = 1024;
 
 	// Decoder Settings Params
@@ -47,67 +53,46 @@ private:
 	std::string device{ "cpu" };
 	Ort::Env env;
 	Ort::SessionOptions session_options;
-	Ort::Session *EncoderSession = nullptr;
-	Ort::Session *DecoderSession = nullptr;
-
+	std::unique_ptr<Ort::Session> EncoderSession, DecoderSession;
+	std::vector<int64_t> EncoderInputShape, EncoderOutputShape;
 	// CPU MemoryInfo and memory allocation
 	Ort::AllocatorWithDefaultOptions allocator;
 	Ort::MemoryInfo memory_info_handler = Ort::MemoryInfo::CreateCpu(
 		OrtArenaAllocator, OrtMemTypeDefault
 	);
 
-	// Encoder Hardcode input and output node names
-	unsigned int encoder_num_inputs;
-	std::vector<const char*> encoder_input_node_names;
-	std::vector<std::vector<int64_t>> encoder_input_node_dims;
 
-	unsigned int encoder_num_outputs;
-	std::vector<const char*> encoder_output_node_names;
-	std::vector<std::vector<int64_t>> encoder_output_node_dims;
+	const char* DecoderInputNames[6]{ "image_embeddings", "point_coords",   "point_labels",
+							 "mask_input",       "has_mask_input", "orig_im_size" },
+		* DecoderOutputNames[3]{ "masks", "iou_predictions", "low_res_masks" };
 
-	// Decoder Hardcode input and output node names
-	unsigned int decoder_num_inputs;
-	std::vector<const char*> decoder_input_node_names;
-	std::vector<std::vector<int64_t>> decoder_input_node_dims;
-
-	unsigned int decoder_num_outputs;
-	std::vector<const char*> decoder_output_node_names;
-	std::vector<std::vector<int64_t>> decoder_output_node_dims;
 	
 	// input value handlers
 	std::vector<float> input_bgr_value_handler;
-	std::vector<float> input_coord_value_handler;
-	std::vector<float> input_label_value_handler;
 
-	std::vector<Ort::AllocatedStringPtr>Encoder_In_AllocatedStringPtr;
-	std::vector<Ort::AllocatedStringPtr>Encoder_Out_AllocatedStringPtr;
-	std::vector<Ort::AllocatedStringPtr>Decoder_In_AllocatedStringPtr;
-	std::vector<Ort::AllocatedStringPtr>Decoder_Out_AllocatedStringPtr;
-	/* 2023.05.05
-	* TODO : 封装归一化过程
-	*/
+
+
+	std::vector<float> image_embedding;
 
 protected:
 	const unsigned int num_threads;
 
 	cv::Mat Image_PreProcess(cv::Mat srcImage);
-	Ort::Value Encoder_PreProcess(cv::Mat Image);
-	std::vector<Ort::Value> Encoder_BuildEmbedding(Ort::Value* input_tensors);
-	void Encoder_PostProcess();
 
-	std::vector<Ort::Value> Decoder_PreProcess(cv::Mat Image , ClickInfo clickinfo);
-	std::vector<Ort::Value> Decoder_Inference(std::vector<Ort::Value>* input_tensors);
-	std::vector<cv::Mat> Decoder_PostProcess(std::vector<Ort::Value>* input_tensors);
+	bool Encoder_BuildEmbedding(const cv::Mat& Image);
+	
+	std::vector<MatInfo> Decoder_Inference(cv::Mat srcIamge , ClickInfo clickinfo);
+
 
 
 
 public:
 	explicit SAMOnnxRunner(unsigned int num_threads = 1);
-	~SAMOnnxRunner();
+	~SAMOnnxRunner() {};
 
 	void InitOrtEnv(Configuration cfg);
 
-	void InferenceSingleImage(Configuration cfg, cv::Mat srcImage, ClickInfo clickInfo);
+	void InferenceSingleImage(Configuration cfg, const cv::Mat& srcImage, ClickInfo clickInfo);
 
 	void setSegThreshold(float threshold);
 

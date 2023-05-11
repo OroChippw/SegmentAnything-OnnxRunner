@@ -6,8 +6,6 @@
 #include "SAMOnnxRunner.h"
 
 
-
-
 std::tuple<int , int> GetPreProcessShape(int old_h , int old_w , int long_side_length)
 {
 	double scale = long_side_length * 1.0 / MAX(old_h , old_w);
