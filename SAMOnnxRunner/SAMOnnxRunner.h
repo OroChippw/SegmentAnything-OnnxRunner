@@ -19,6 +19,7 @@ typedef struct BoxInfo
 	cv::Point left_top; // (x1,y1)为框选矩形左上角角点
 	cv::Point right_bot; // (x2,y2)为框选矩形右下角角点
 
+	BoxInfo() {};
 	BoxInfo(int left_x, int left_y, int right_x, int right_y) {
 		left_top.x = left_x;
 		left_top.y = left_y;
@@ -89,7 +90,7 @@ public:
 
 	void InitOrtEnv(Configuration cfg);
 
-	void InferenceSingleImage(Configuration cfg, const cv::Mat& srcImage, ClickInfo clickInfo , BoxInfo boxinfo);
+	std::vector<MatInfo> InferenceSingleImage(Configuration cfg, const cv::Mat& srcImage, ClickInfo clickInfo , BoxInfo boxinfo);
 
 	void setSegThreshold(float threshold);
 

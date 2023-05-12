@@ -51,13 +51,10 @@ BoxInfo ResizeLongestSide_apply_box(cv::Mat Image , BoxInfo boxinfo , int encode
 	float new_w = std::get<1>(newShape);
 	float new_h = std::get<0>(newShape);
 
-	std::cout << boxinfo.right_bot.x << " " << boxinfo.right_bot.y << std::endl;
-
 	boxinfo.left_top.x = boxinfo.left_top.x * float(new_w / w);
 	boxinfo.left_top.y = boxinfo.left_top.y * float(new_h / h);
 	boxinfo.right_bot.x = boxinfo.right_bot.x * float(new_w / w);
 	boxinfo.right_bot.y = boxinfo.right_bot.y * float(new_h / h);
-	std::cout << boxinfo.right_bot.x << " " << boxinfo.right_bot.y << std::endl;
 
 	return boxinfo;
 }

@@ -200,11 +200,11 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 
 }
 
-void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , const cv::Mat& srcImage , ClickInfo clickInfo , BoxInfo boxinfo)
+std::vector<MatInfo> SAMOnnxRunner::InferenceSingleImage(Configuration cfg , const cv::Mat& srcImage , ClickInfo clickInfo , BoxInfo boxinfo)
 {
 	if (srcImage.empty())
 	{
-		return;
+		throw  "srcImage empty !";
 	}
 	std::cout << "Image info : srcImage width : " << srcImage.cols << " srcImage height :  " << srcImage.rows << std::endl;
 	cv::Mat rgbImage = Image_PreProcess(srcImage);
@@ -217,8 +217,7 @@ void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , const cv::Mat& srcI
 	auto result = Decoder_Inference(cfg , srcImage , clickInfo , boxinfo);
 	if (result.empty())
 	{
-		std::cout << "No result !" << std::endl;
-		return;
+		throw  "No result !" ;
 	}
 
 	std::cout << "=> Generate result mask size : " << result.size() << std::endl;
@@ -228,9 +227,8 @@ void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , const cv::Mat& srcI
 		std::string save_path = cfg.SaveDir + "/result_" + std::to_string(i) +".png";
 		cv::imwrite(save_path, result[i].mask);
 		std::cout << "=> Result save as " << save_path << " Iou prediction is " << result[i].iou_pred << std::endl;
-
 	}
-
+	return result;
 }
 
 void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)

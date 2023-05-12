@@ -140,6 +140,7 @@
     <ClCompile Include="SAMOnnxRunner.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="interactive.h" />
     <ClInclude Include="SAMOnnxRunner.h" />
     <ClInclude Include="transform.h" />
     <ClInclude Include="utils.h" />
