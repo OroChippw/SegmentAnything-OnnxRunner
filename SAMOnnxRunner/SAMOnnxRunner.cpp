@@ -44,12 +44,11 @@ bool SAMOnnxRunner::Encoder_BuildEmbedding(const cv::Mat& Image)
 		return false;
 	}
 	if (Image.channels() != 3) {
-		std::cerr << "Input is not a 3-channel image" << std::endl;
+		std::cerr << "Input image is not a 3-channel image" << std::endl;
 		return false;
 	}
 
-	std::cout << "Encoder_BuildEmbedding Start ..." << std::endl;
-
+	std::cout << "=> Encoder BuildEmbedding Start ..." << std::endl;
 	for (int i = 0; i < EncoderInputShape[2]; i++) {
 		for (int j = 0; j < EncoderInputShape[3]; j++) {
 			inputTensorValues[i * EncoderInputShape[3] + j] = Image.at<cv::Vec3b>(i, j)[2];
@@ -73,26 +72,46 @@ bool SAMOnnxRunner::Encoder_BuildEmbedding(const cv::Mat& Image)
 
 	const char* inputNamesPre[] = { "input" }, * outputNamesPre[] = { "output" };
 
+	auto time_start = std::chrono::high_resolution_clock::now();
 	Ort::RunOptions run_options;
 	EncoderSession->Run(run_options, inputNamesPre, &inputTensor, 1, outputNamesPre, &outputTensorPre,
 		1);
-	std::cout << "Encoder_BuildEmbedding Finish ..." << std::endl;
+	auto time_end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> diff = time_end - time_start;
+
+	std::cout << "Encoder BuildEmbedding Finish ..." << std::endl;
+	std::cout << "Encoder BuildEmbedding Cost time : " << diff.count() << "s" << std::endl;
 
 	return true;
 }
 
 
-std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(cv::Mat srcImage , ClickInfo clickinfo)
+std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Mat srcImage , ClickInfo clickinfo , BoxInfo boxinfo)
 {
+	int numPoints = cfg.UseBoxInfo ? 3 : 1;
+	std::cout << "=> ResizeLongestSide apply coordinates" << std::endl;
 	ClickInfo applyCoords = ResizeLongestSide_apply_coord(srcImage, clickinfo, EncoderInputSize);
 	std::cout << "(applyCoords.pt.x) : " << (applyCoords.pt.x) << " (applyCoords.pt.y) : " << (applyCoords.pt.y) << std::endl;
+	float inputPointValues[] = { (float)applyCoords.pt.x, (float)applyCoords.pt.y };
+	float inputLabelValues[] = {applyCoords.positive};
+
+
+	BoxInfo applyBoxs = ResizeLongestSide_apply_box(srcImage, boxinfo, EncoderInputSize);
+	std::cout << "(applyBoxs.left_top.x) : " << (applyBoxs.left_top.x) << " (applyBoxs.left_top.y) : " << (applyBoxs.left_top.y) << std::endl;
+	std::cout << "(applyBoxs.right_bot.x) : " << (applyBoxs.right_bot.x) << " (applyBoxs.right_bot.y) : " << (applyBoxs.right_bot.y) << std::endl;
+
+	float inputPointsValues[] = {(float)applyCoords.pt.x, (float)applyCoords.pt.y ,\
+								  (float)applyBoxs.left_top.x, (float)applyBoxs.left_top.y ,\
+								  (float)applyBoxs.right_bot.x, (float)applyBoxs.right_bot.y ,
+								};
+	float inputLabelsValues[] = {applyCoords.positive , (float)2 , (float)3 };
+
+
 	const size_t maskInputSize = 256 * 256;
-	float inputPointValues[] = { (float)applyCoords.pt.x, (float)applyCoords.pt.y }, inputLabelValues[] = { applyCoords.positive },
-		maskInputValues[maskInputSize], hasMaskValues[] = { 0 },
+	float maskInputValues[maskInputSize], hasMaskValues[] = { 0 },
 		orig_im_size_values[] = { (float)srcImage.rows, (float)srcImage.cols};
 	memset(maskInputValues, 0, sizeof(maskInputValues));
 
-	int numPoints = 1;
 	std::vector<int64_t> inputPointShape = { 1, numPoints, 2 }, pointLabelsShape = { 1, numPoints },
 		maskInputShape = { 1, 1, 256, 256 }, hasMaskInputShape = { 1 },
 		origImSizeShape = { 2 };
@@ -101,10 +120,21 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(cv::Mat srcImage , ClickIn
 	inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
 		memory_info_handler, (float*)image_embedding.data(), image_embedding.size(),
 		EncoderOutputShape.data(), EncoderOutputShape.size()));
-	inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
-		memory_info_handler, inputPointValues, 2, inputPointShape.data(), inputPointShape.size()));
-	inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
-		memory_info_handler, inputLabelValues, 1, pointLabelsShape.data(), pointLabelsShape.size()));
+	if (cfg.UseBoxInfo)
+	{
+		inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+			memory_info_handler, inputPointsValues, 2 * numPoints, inputPointShape.data(), inputPointShape.size()));
+		inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+			memory_info_handler, inputLabelsValues, 1 * numPoints, pointLabelsShape.data(), pointLabelsShape.size()));
+	}
+	else
+	{
+		inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+			memory_info_handler, inputPointValues, 2, inputPointShape.data(), inputPointShape.size()));
+		inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
+			memory_info_handler, inputLabelValues, 1, pointLabelsShape.data(), pointLabelsShape.size()));
+	}
+	
 	inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
 		memory_info_handler, maskInputValues, maskInputSize, maskInputShape.data(), maskInputShape.size()));
 	inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
@@ -113,8 +143,15 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(cv::Mat srcImage , ClickIn
 		memory_info_handler, orig_im_size_values, 2, origImSizeShape.data(), origImSizeShape.size()));
 
 	Ort::RunOptions runOptionsSam;
+
+	std::cout << "=> Decoder Inference Start ..." << std::endl;
+	auto time_start = std::chrono::high_resolution_clock::now();
 	auto DecoderOutputTensors = DecoderSession->Run(runOptionsSam, DecoderInputNames, inputTensorsSam.data(),
 		inputTensorsSam.size(), DecoderOutputNames, 3);
+	auto time_end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> diff = time_end - time_start;
+	std::cout << "Decoder Inference Finish ..." << std::endl;
+	std::cout << "Decoder Inference Cost time : " << diff.count() << "s" << std::endl;
 
 	auto masks = DecoderOutputTensors[0].GetTensorMutableData<float>();
 	auto iou_predictions = DecoderOutputTensors[1].GetTensorMutableData<float>();
@@ -163,7 +200,7 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(cv::Mat srcImage , ClickIn
 
 }
 
-void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , const cv::Mat& srcImage , ClickInfo clickInfo)
+void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , const cv::Mat& srcImage , ClickInfo clickInfo , BoxInfo boxinfo)
 {
 	if (srcImage.empty())
 	{
@@ -177,8 +214,7 @@ void SAMOnnxRunner::InferenceSingleImage(Configuration cfg , const cv::Mat& srcI
 		auto encoder_input_tensors = Encoder_BuildEmbedding(rgbImage);
 		InitEncoderEmbedding = true;
 	}
-
-	auto result = Decoder_Inference(srcImage , clickInfo);
+	auto result = Decoder_Inference(cfg , srcImage , clickInfo , boxinfo);
 	if (result.empty())
 	{
 		std::cout << "No result !" << std::endl;

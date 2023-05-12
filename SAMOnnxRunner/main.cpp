@@ -10,6 +10,7 @@
 int main()
 {
     bool USE_SINGLEMASK = false;
+    bool USE_BOXINFO = true;
     std::string encoder_model_path = "E:\\OroChiLab\\segment-anything-main\\models\\raw\\sam_preprocess.onnx";
     std::string decoder_model_path;
     if (USE_SINGLEMASK)
@@ -26,12 +27,13 @@ int main()
     double threshold = 0.9;
 
 
-
     Configuration cfg;
     cfg.EncoderModelPath = encoder_model_path;
     cfg.DecoderModelPath = decoder_model_path;
     cfg.SaveDir = save_dir;
     cfg.SegThreshold = threshold;
+    cfg.UseSingleMask = USE_SINGLEMASK;
+    cfg.UseBoxInfo = USE_BOXINFO;
 
     // Init Onnxruntime Env
     SAMOnnxRunner Segmentator(std::thread::hardware_concurrency());
@@ -40,9 +42,15 @@ int main()
     ClickInfo clickinfo;
     clickinfo.positive = true;
     clickinfo.pt = cv::Point(1156, 550);
+
+    BoxInfo boxinfo(773, 187, 1465, 896);
+    if (cfg.UseBoxInfo)
+    {
+        BoxInfo boxinfo_(773,187,1465, 896);
+    }
     cv::Mat srcImage = cv::imread(image_path , -1);
 
-    Segmentator.InferenceSingleImage(cfg, srcImage, clickinfo);
+    Segmentator.InferenceSingleImage(cfg, srcImage, clickinfo , boxinfo);
 
     Segmentator.ResetInitEncoder();
 

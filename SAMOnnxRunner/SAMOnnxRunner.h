@@ -16,10 +16,15 @@ struct Configuration
 
 typedef struct BoxInfo 
 {
-	int x1; // (x1,y1)为框选矩形左上角角点
-	int y1;
-	int x2; // (x2,y2)为框选矩形右下角角点
-	int y2;
+	cv::Point left_top; // (x1,y1)为框选矩形左上角角点
+	cv::Point right_bot; // (x2,y2)为框选矩形右下角角点
+
+	BoxInfo(int left_x, int left_y, int right_x, int right_y) {
+		left_top.x = left_x;
+		left_top.y = left_y;
+		right_bot.x = right_x;
+		right_bot.y = right_y;
+	};
 }BoxInfo;
 
 
@@ -66,11 +71,6 @@ private:
 							 "mask_input",       "has_mask_input", "orig_im_size" },
 		* DecoderOutputNames[3]{ "masks", "iou_predictions", "low_res_masks" };
 
-	
-	// input value handlers
-	std::vector<float> input_bgr_value_handler;
-
-
 
 	std::vector<float> image_embedding;
 
@@ -81,10 +81,7 @@ protected:
 
 	bool Encoder_BuildEmbedding(const cv::Mat& Image);
 	
-	std::vector<MatInfo> Decoder_Inference(cv::Mat srcIamge , ClickInfo clickinfo);
-
-
-
+	std::vector<MatInfo> Decoder_Inference(Configuration cfg , cv::Mat srcIamge , ClickInfo clickinfo , BoxInfo boxinfo);
 
 public:
 	explicit SAMOnnxRunner(unsigned int num_threads = 1);
@@ -92,7 +89,7 @@ public:
 
 	void InitOrtEnv(Configuration cfg);
 
-	void InferenceSingleImage(Configuration cfg, const cv::Mat& srcImage, ClickInfo clickInfo);
+	void InferenceSingleImage(Configuration cfg, const cv::Mat& srcImage, ClickInfo clickInfo , BoxInfo boxinfo);
 
 	void setSegThreshold(float threshold);
 
