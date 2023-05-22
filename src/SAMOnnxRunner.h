@@ -37,8 +37,6 @@ struct MatInfo
 class SAMOnnxRunner 
 {
 private:
-	// Image Eembedding
-	//std::vector<Ort::Value> image_embedding;
 
 	// Encoder Settings Params
 	bool InitModelSession = false;
@@ -65,7 +63,7 @@ private:
 							 "mask_input",       "has_mask_input", "orig_im_size" },
 		* DecoderOutputNames[3]{ "masks", "iou_predictions", "low_res_masks" };
 
-
+	// Image Eembedding
 	std::vector<float> image_embedding;
 
 protected:
