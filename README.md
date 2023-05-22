@@ -1,4 +1,4 @@
-# SAMOnnxRunner
+# SegmentAnything-OnnxRunner
 ## Introduction
 SegmentAnything-OnnxRunner is an example using Meta AI Research's SAM onnx model.The Segment Anything Model (SAM) produces high quality object masks from input prompts such as points or boxes, and it can be used to generate masks for all objects in an image.This repository is used to record the experiment data that run SAM onnx model on CPU/GPU.At the same time, the encoder and decoder of SAM are decoupled in this repository.
 
