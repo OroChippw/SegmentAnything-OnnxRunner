@@ -18,8 +18,4 @@ data/
 *.exp
 *.pdb
 
-# model
-*.pth
-*.onnx
-*.tflite
 

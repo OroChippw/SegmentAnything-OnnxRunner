@@ -42,7 +42,7 @@ private:
 
 	// Encoder Settings Params
 	bool InitModelSession = false;
-	bool InitEncoderEmbedding;
+	bool InitEncoderEmbedding = false;
 	int EncoderInputSize = 1024;
 
 	// Decoder Settings Params

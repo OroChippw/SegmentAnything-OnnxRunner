@@ -12,19 +12,19 @@ int main()
     bool USE_DEMO = false;
     bool USE_SINGLEMASK = false;
     bool USE_BOXINFO = true;
-    std::string encoder_model_path = "E:\\OroChiLab\\segment-anything-main\\models\\raw\\sam_preprocess.onnx";
+    std::string encoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\encoder\\vit_b\\sam_preprocess-b.onnx";
     std::string decoder_model_path;
     if (USE_SINGLEMASK)
     {
-        decoder_model_path = "E:/OroChiLab/segment-anything-main/model_weights/sam_vit_b_singlemask.onnx";
+        decoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\decoder\\vit_b\\sam_vit_b_singlemask.onnx";
     }
     else
     {
-        decoder_model_path = "E:/OroChiLab/segment-anything-main/model_weights/withEncoder/vit_b/decoder.onnx";
+        decoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\decoder\\vit_b\\sam_vit_b.onnx";
     }
-    std::string image_path = "E:/OroChiLab/Data/NailsJpgfile/images/1_1-2.jpg";
+    std::string image_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\data\\input\\1_1-2.jpg";
 
-    std::string save_dir = "E:/OroChiLab/Data/NailsJpgfile/images/savedir/";
+    std::string save_dir = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\data\\output";
     double threshold = 0.9;
 
 
