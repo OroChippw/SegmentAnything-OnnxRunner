@@ -60,7 +60,7 @@ private:
 
 
 	const char* DecoderInputNames[6]{ "image_embeddings", "point_coords",   "point_labels",
-							 "mask_input",       "has_mask_input", "orig_im_size" },
+							 "mask_input", "has_mask_input", "orig_im_size" },
 		* DecoderOutputNames[3]{ "masks", "iou_predictions", "low_res_masks" };
 
 	// Image Eembedding

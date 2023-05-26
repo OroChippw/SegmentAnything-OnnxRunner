@@ -18,4 +18,6 @@ data/
 *.exp
 *.pdb
 
+# model
+onnx_models
 

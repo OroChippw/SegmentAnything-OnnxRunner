@@ -9,10 +9,10 @@
 
 int main()
 {
-    bool USE_DEMO = false;
-    bool USE_SINGLEMASK = false;
-    bool USE_BOXINFO = true;
-    std::string encoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\encoder\\vit_b\\sam_preprocess-b.onnx";
+    bool USE_DEMO = true;
+    bool USE_SINGLEMASK = true;
+    bool USE_BOXINFO = false;
+    std::string encoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\encoder\\vit_b\\sam_vit_b_01ec64_encoder.onnx";
     std::string decoder_model_path;
     if (USE_SINGLEMASK)
     {
@@ -20,11 +20,11 @@ int main()
     }
     else
     {
-        decoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\decoder\\vit_b\\sam_vit_b.onnx";
+        decoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\decoder\\vit_b\\sam_vit_b_01ec64_decoder.onnx";
     }
     std::string image_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\data\\input\\1_1-2.jpg";
-
-    std::string save_dir = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\data\\output";
+    image_path = "C:\\Users\\Administrator\\Desktop\\temp\\Red_Apple.jpg";
+    std::string save_dir = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\data\\test_output";
     double threshold = 0.9;
 
 
@@ -74,7 +74,12 @@ int main()
                 outImage = cv::Mat::zeros(srcImage.size(), CV_8UC3);
                 for (int i = 0; i < srcImage.rows; i++) {
                     for (int j = 0; j < srcImage.cols; j++) {
-                        auto bFront = maskinfo[1].mask.at<uchar>(i, j) > 0;
+                        unsigned int index;
+                        if (cfg.UseSingleMask)
+                        {
+                            index = 0;
+                        }
+                        auto bFront = maskinfo[index].mask.at<uchar>(i, j) > 0;
                         float factor = bFront ? 1.0 : 0.5;
                         outImage.at<cv::Vec3b>(i, j) = srcImage.at<cv::Vec3b>(i, j) * factor;
                     }
@@ -117,7 +122,7 @@ int main()
     }
     
     std::cout << "Hello World!\n";
-    return 0;
+    return EXIT_SUCCESS;
 }
     
 
