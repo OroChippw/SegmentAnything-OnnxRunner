@@ -19,7 +19,7 @@ This repository use onnxruntime-win-x64-1.14.1
 This repository use opencv4.7.0
 # CXX_STANDARD 17
 ```
-### How to build and run
+### Build and Run
 ```
 # Enter the source code directory where CMakeLists.txt is located, and create a new build folder
 mkdir build
@@ -32,6 +32,17 @@ cmake --build .
 # cmake --build . --config Debug
 # cmkae --build . --config Release
 ```
+### Model Checkpoints(TODO)
+The SAM encoder and decoder are decoupled and quantized. After decoupling, if you perform multiple interactive clicks on a picture, you don't need to re-encode it. The model with -quant is the quantized version
+| Encoder version | Model Size | Decoder version | Model Size |
+
+### Experiment Record
+Environment Device : i5-13600KF + NVIDIA GeForce RTX 3060（12GB）
+Input image resolution : 1920 * 1080 * 3  
+| Encoder version | Model Size(MB) | CPU encoding speed(s) | Decoder version | Model Size(MB) | CPU decoding speed(s) |
+| :--------------:| :------------: | :------------: | :------------: | :------------: | :------------: |
+| sam_vit_b_encoder.onnx | 342 | 2.5485 | sam_vit_b_decoder.onnx | 15.7 | 0.075 | 
+
 
 ### License
 This project is licensed under the MIT License.

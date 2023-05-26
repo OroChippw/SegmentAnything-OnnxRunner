@@ -223,7 +223,7 @@ std::vector<MatInfo> SAMOnnxRunner::InferenceSingleImage(Configuration cfg , con
 	std::cout << "=> Generate result mask size : " << result.size() << std::endl;
 
 	for (unsigned int i = 0; i < result.size(); i++)
-	{
+	{	
 		std::string save_path = cfg.SaveDir + "/result_" + std::to_string(i) +".png";
 		cv::imwrite(save_path, result[i].mask);
 		std::cout << "=> Result save as " << save_path << " Iou prediction is " << result[i].iou_pred << std::endl;
