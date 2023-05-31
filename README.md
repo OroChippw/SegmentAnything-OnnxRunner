@@ -33,15 +33,24 @@ cmake --build .
 # cmkae --build . --config Release
 ```
 ### Model Checkpoints(TODO)
-The SAM encoder and decoder are decoupled and quantized. After decoupling, if you perform multiple interactive clicks on a picture, you don't need to re-encode it. The model with -quant is the quantized version
-| Encoder version | Model Size | Decoder version | Model Size |
+The SAM encoder and decoder are decoupled and quantized. After decoupling, if you perform multiple interactive clicks on a picture, you don't need to re-encode it. The model with -quantize is the quantized version
 
 ### Experiment Record
 Environment Device : i5-13600KF + NVIDIA GeForce RTX 3060（12GB）
 Input image resolution : 1920 * 1080 * 3  
-| Encoder version | Model Size(MB) | CPU encoding speed(s) | Decoder version | Model Size(MB) | CPU decoding speed(s) |
-| :--------------:| :------------: | :------------: | :------------: | :------------: | :------------: |
-| sam_vit_b_encoder.onnx | 342 | 2.5485 | sam_vit_b_decoder.onnx | 15.7 | 0.075 | 
+All models are available in [Baidu Pan](https://pan.baidu.com/s/1j0z1mHDOshOCcQWwetmFnQ?pwd=ljgr) (code: ljgr).    
+#### Encoder
+| Encoder version | Model Size(MB) | CPU encoding speed(s) | 
+| :------------------:| :---------------: | :---------------: | 
+| sam_vit_b_01ec64_encoder.onnx          | 342 | 2.5485 | 
+| sam_vit_b_01ec64_encoder-quantize.onnx | 103 | 2.0446 | 
+
+#### Decoder
+| Decoder version | Model Size(MB) | CPU decoding speed(s) | 
+| :------------------:| :---------------: | :---------------: | 
+| sam_vit_b_01ec64_decoder.onnx            | 15.7 | 0.075 | 
+| sam_vit_b_01ec64_decoder_singlemask.onnx | 15.7 | 0.075 | 
+
 
 
 ### License
