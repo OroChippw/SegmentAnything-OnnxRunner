@@ -10,23 +10,22 @@
 int main()
 {
     bool USE_DEMO = true;
-    bool USE_SINGLEMASK = true;
+    bool USE_SINGLEMASK = false;
     bool USE_BOXINFO = false;
-    std::string encoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\encoder\\vit_b\\sam_vit_b_01ec64_encoder.onnx";
+    std::string encoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder-quantize.onnx";
     std::string decoder_model_path;
     if (USE_SINGLEMASK)
     {
-        decoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\decoder\\vit_b\\sam_vit_b_singlemask.onnx";
+        decoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder_singlemask.onnx";
     }
     else
     {
-        decoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\decoder\\vit_b\\sam_vit_b_01ec64_decoder.onnx";
+        decoder_model_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx";
     }
     std::string image_path = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\data\\input\\1_1-2.jpg";
     image_path = "C:\\Users\\Administrator\\Desktop\\temp\\Red_Apple.jpg";
     std::string save_dir = "E:\\OroChiLab\\SegmentAnything-OnnxRunner_cmake\\data\\test_output";
     double threshold = 0.9;
-
 
     Configuration cfg;
     cfg.EncoderModelPath = encoder_model_path;
@@ -69,12 +68,12 @@ int main()
             if (clickinfo_test.pt.x > 0 && clickinfo_test.pt.y > 0)
             {
                 auto maskinfo = Segmentator.InferenceSingleImage(cfg, srcImage, clickinfo_test, boxinfo);
+                unsigned int index = 0;
 
                 // apply mask to image
                 outImage = cv::Mat::zeros(srcImage.size(), CV_8UC3);
                 for (int i = 0; i < srcImage.rows; i++) {
                     for (int j = 0; j < srcImage.cols; j++) {
-                        unsigned int index;
                         if (cfg.UseSingleMask)
                         {
                             index = 0;
