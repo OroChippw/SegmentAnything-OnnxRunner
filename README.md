@@ -40,17 +40,20 @@ Environment Device : i5-13600KF + NVIDIA GeForce RTX 3060（12GB）
 Input image resolution : 1920 * 1080 * 3  
 All models are available in [Baidu Pan](https://pan.baidu.com/s/1j0z1mHDOshOCcQWwetmFnQ?pwd=ljgr) (code: ljgr).    
 #### Encoder
-| Encoder version | Model Size(MB) | CPU encoding speed(s) | 
+| Encoder version | Model Size(MB/GB) | CPU encoding speed(s) | 
 | :------------------:| :---------------: | :---------------: | 
-| sam_vit_b_01ec64_encoder.onnx          | 342 | 2.5485 | 
-| sam_vit_b_01ec64_encoder-quantize.onnx | 103 | 2.0446 | 
+| sam_vit_b_01ec64_encoder.onnx          | 342MB | 2.5485 | 
+| sam_vit_b_01ec64_encoder-quantize.onnx | 103MB | 2.0446 | 
+| sam_vit_l_0b3195_encoder.onnx          | 1.14GB | 6.0346 | 
+| sam_vit_l_0b3195_encoder-quantize.onnx | 316MB | 2.0446 | 
 
 #### Decoder
 | Decoder version | Model Size(MB) | CPU decoding speed(s) | 
 | :------------------:| :---------------: | :---------------: | 
-| sam_vit_b_01ec64_decoder.onnx            | 15.7 | 0.075 | 
-| sam_vit_b_01ec64_decoder_singlemask.onnx | 15.7 | 0.075 | 
-
+| sam_vit_b_01ec64_decoder.onnx            | 15.7MB | 0.075 | 
+| sam_vit_b_01ec64_decoder_singlemask.onnx | 15.7MB | 0.075 | 
+| sam_vit_b_01ec64_decoder.onnx            | 15.7MB | 0.082 | 
+| sam_vit_b_01ec64_decoder_singlemask.onnx | 15.7MB | 0.082 | 
 
 
 ### License
