@@ -20,4 +20,7 @@ data/
 
 # model
 onnx_models
+*.pth
+*.onnx
+*.tflite
 

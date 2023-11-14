@@ -10,7 +10,7 @@ void GetClick_handler(int event, int x, int y, int flags, void* data)
     {
     case cv::EVENT_LBUTTONDOWN:
     {
-        std::cout << "=> Mouse handler trigger : EVENT_LBUTTONDOWN" << std::endl;
+        std::cout << "[INFO] Mouse handler trigger : EVENT_LBUTTONDOWN" << std::endl;
         (*clickinfo).pt.x = x;
         (*clickinfo).pt.y = y;
         (*clickinfo).positive = 1;
@@ -18,7 +18,7 @@ void GetClick_handler(int event, int x, int y, int flags, void* data)
     }
     case cv::EVENT_RBUTTONDOWN:
     {
-        std::cout << "=> Mouse handler trigger : EVENT_RBUTTONDOWN" << std::endl;
+        std::cout << "[INFO] Mouse handler trigger : EVENT_RBUTTONDOWN" << std::endl;
         (*clickinfo).pt.x = x;
         (*clickinfo).pt.y = y;
         (*clickinfo).positive = 0;
