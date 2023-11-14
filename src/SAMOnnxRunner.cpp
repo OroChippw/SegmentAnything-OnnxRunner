@@ -15,7 +15,7 @@
 
 cv::Mat SAMOnnxRunner::Image_PreProcess(cv::Mat srcImage)
 {
-	std::cout << "PreProcess Image ..." << std::endl;
+	std::cout << "[INFO] PreProcess Image ..." << std::endl;
 	cv::Mat rgbImage;
 	cv::cvtColor(srcImage, rgbImage, cv::COLOR_BGR2RGB);
 	cv::Mat resizeImage = ResizeLongestSide_apply_image(srcImage, EncoderInputSize);
@@ -28,7 +28,7 @@ cv::Mat SAMOnnxRunner::Image_PreProcess(cv::Mat srcImage)
 	cv::Mat paddingImage;
 	cv::copyMakeBorder(resizeImage, paddingImage, 0, pad_h, 0, pad_w, cv::BorderTypes::BORDER_CONSTANT, cv::Scalar(0, 0, 0));
 
-	std::cout << "paddingImage width : " << paddingImage.cols << ", paddingImage height : " << paddingImage.rows << std::endl;
+	std::cout << "[INFO] paddingImage width : " << paddingImage.cols << ", paddingImage height : " << paddingImage.rows << std::endl;
 	return paddingImage;
 }
 
@@ -38,8 +38,8 @@ bool SAMOnnxRunner::Encoder_BuildEmbedding(const cv::Mat& Image)
 		EncoderInputShape[3]);
 
 	if (Image.size() != cv::Size(EncoderInputShape[3], EncoderInputShape[2])) {
-		std::cerr << "Image size not match" << std::endl;
-		std::cout << "Image width : " << Image.cols << " Image height : " << Image.rows << std::endl;
+		std::cerr << "[WARRING] Image size not match" << std::endl;
+		std::cout << "[INFO] Image width : " << Image.cols << " Image height : " << Image.rows << std::endl;
 
 		return false;
 	}
@@ -48,7 +48,7 @@ bool SAMOnnxRunner::Encoder_BuildEmbedding(const cv::Mat& Image)
 		return false;
 	}
 
-	std::cout << "=> Encoder BuildEmbedding Start ..." << std::endl;
+	std::cout << "[INFO] Encoder BuildEmbedding Start ..." << std::endl;
 	for (int i = 0; i < EncoderInputShape[2]; i++) {
 		for (int j = 0; j < EncoderInputShape[3]; j++) {
 			inputTensorValues[i * EncoderInputShape[3] + j] = Image.at<cv::Vec3b>(i, j)[2];
@@ -79,8 +79,8 @@ bool SAMOnnxRunner::Encoder_BuildEmbedding(const cv::Mat& Image)
 	auto time_end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> diff = time_end - time_start;
 
-	std::cout << "Encoder BuildEmbedding Finish ..." << std::endl;
-	std::cout << "Encoder BuildEmbedding Cost time : " << diff.count() << "s" << std::endl;
+	std::cout << "[INFO] Encoder BuildEmbedding Finish ..." << std::endl;
+	std::cout << "[INFO] Encoder BuildEmbedding Cost time : " << diff.count() << "s" << std::endl;
 
 	return true;
 }
@@ -89,16 +89,16 @@ bool SAMOnnxRunner::Encoder_BuildEmbedding(const cv::Mat& Image)
 std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Mat srcImage , ClickInfo clickinfo , BoxInfo boxinfo)
 {
 	int numPoints = cfg.UseBoxInfo ? 3 : 1;
-	std::cout << "=> ResizeLongestSide apply coordinates" << std::endl;
+	std::cout << "[INFO] ResizeLongestSide apply coordinates" << std::endl;
 	ClickInfo applyCoords = ResizeLongestSide_apply_coord(srcImage, clickinfo, EncoderInputSize);
-	std::cout << "(applyCoords.pt.x) : " << (applyCoords.pt.x) << " (applyCoords.pt.y) : " << (applyCoords.pt.y) << std::endl;
+	std::cout << "[INFO] (applyCoords.pt.x) : " << (applyCoords.pt.x) << " (applyCoords.pt.y) : " << (applyCoords.pt.y) << std::endl;
 	float inputPointValues[] = { (float)applyCoords.pt.x, (float)applyCoords.pt.y };
 	float inputLabelValues[] = {applyCoords.positive};
 
 
 	BoxInfo applyBoxs = ResizeLongestSide_apply_box(srcImage, boxinfo, EncoderInputSize);
-	std::cout << "(applyBoxs.left_top.x) : " << (applyBoxs.left_top.x) << " (applyBoxs.left_top.y) : " << (applyBoxs.left_top.y) << std::endl;
-	std::cout << "(applyBoxs.right_bot.x) : " << (applyBoxs.right_bot.x) << " (applyBoxs.right_bot.y) : " << (applyBoxs.right_bot.y) << std::endl;
+	std::cout << "[INFO] (applyBoxs.left_top.x) : " << (applyBoxs.left_top.x) << " (applyBoxs.left_top.y) : " << (applyBoxs.left_top.y) << std::endl;
+	std::cout << "[INFO] (applyBoxs.right_bot.x) : " << (applyBoxs.right_bot.x) << " (applyBoxs.right_bot.y) : " << (applyBoxs.right_bot.y) << std::endl;
 
 	float inputPointsValues[] = {(float)applyCoords.pt.x, (float)applyCoords.pt.y ,\
 								  (float)applyBoxs.left_top.x, (float)applyBoxs.left_top.y ,\
@@ -144,14 +144,14 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 
 	Ort::RunOptions runOptionsSam;
 
-	std::cout << "=> Decoder Inference Start ..." << std::endl;
+	std::cout << "[INFO] Decoder Inference Start ..." << std::endl;
 	auto time_start = std::chrono::high_resolution_clock::now();
 	auto DecoderOutputTensors = DecoderSession->Run(runOptionsSam, DecoderInputNames, inputTensorsSam.data(),
 		inputTensorsSam.size(), DecoderOutputNames, 3);
 	auto time_end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> diff = time_end - time_start;
-	std::cout << "Decoder Inference Finish ..." << std::endl;
-	std::cout << "Decoder Inference Cost time : " << diff.count() << "s" << std::endl;
+	std::cout << "[INFO] Decoder Inference Finish ..." << std::endl;
+	std::cout << "[INFO] Decoder Inference Cost time : " << diff.count() << "s" << std::endl;
 
 	auto masks = DecoderOutputTensors[0].GetTensorMutableData<float>();
 	auto iou_predictions = DecoderOutputTensors[1].GetTensorMutableData<float>();
@@ -171,13 +171,13 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 	const unsigned int Resizemasks_width = mask_dims.at(2);
 	const unsigned int Resizemasks_height = mask_dims.at(3);
 
-	std::cout << "Resizemasks_batch : " << Resizemasks_batch << " Resizemasks_nums : " << Resizemasks_nums \
+	std::cout << "[INFO] Resizemasks_batch : " << Resizemasks_batch << " Resizemasks_nums : " << Resizemasks_nums \
 		<< " Resizemasks_width : " << Resizemasks_width << " Resizemasks_height : " << Resizemasks_height << std::endl;
 
-	std::cout << "Gemmiou_predictions_dim_0 : " << iou_pred_dims.at(0) << " Generate mask num : " << iou_pred_dims.at(1) << std::endl;
+	std::cout << "[INFO] Gemmiou_predictions_dim_0 : " << iou_pred_dims.at(0) << " Generate mask num : " << iou_pred_dims.at(1) << std::endl;
 
-	std::cout << "Reshapelow_res_masks_dim_0 : " << low_res_dims.at(0) << " Reshapelow_res_masks_dim_1 : " << low_res_dims.at(1) << std::endl;
-	std::cout << "Reshapelow_res_masks_dim_2 : " << low_res_dims.at(2) << " Reshapelow_res_masks_dim_3 : " << low_res_dims.at(3) << std::endl;
+	std::cout << "[INFO] Reshapelow_res_masks_dim_0 : " << low_res_dims.at(0) << " Reshapelow_res_masks_dim_1 : " << low_res_dims.at(1) << std::endl;
+	std::cout << "[INFO] Reshapelow_res_masks_dim_2 : " << low_res_dims.at(2) << " Reshapelow_res_masks_dim_3 : " << low_res_dims.at(3) << std::endl;
 
 
 	std::vector<MatInfo> masks_list;
@@ -204,29 +204,35 @@ std::vector<MatInfo> SAMOnnxRunner::InferenceSingleImage(Configuration cfg , con
 {
 	if (srcImage.empty())
 	{
-		throw  "srcImage empty !";
+		throw "[ERROR] srcImage empty !";
 	}
-	std::cout << "Image info : srcImage width : " << srcImage.cols << " srcImage height :  " << srcImage.rows << std::endl;
+	std::cout << "[INFO] Image info : srcImage width : " << srcImage.cols << " srcImage height :  " << srcImage.rows << std::endl;
 	cv::Mat rgbImage = Image_PreProcess(srcImage);
 	if (!InitEncoderEmbedding)
 	{
-		std::cout << "InitEncoder is false , Preprocess before encoder image embedding ... " << std::endl;
+		std::cout << "[INFO] InitEncoder is false , Preprocess before encoder image embedding ... " << std::endl;
 		auto encoder_input_tensors = Encoder_BuildEmbedding(rgbImage);
 		InitEncoderEmbedding = true;
 	}
 	auto result = Decoder_Inference(cfg , srcImage , clickInfo , boxinfo);
 	if (result.empty())
 	{
-		throw  "No result !" ;
+		throw  "[ERROR] No result !" ;
 	}
 
-	std::cout << "=> Generate result mask size : " << result.size() << std::endl;
+	std::cout << "[INFO] Generate result mask size is " << result.size() << std::endl;
 
+	unsigned int index = 0;
 	for (unsigned int i = 0; i < result.size(); i++)
 	{	
-		std::string save_path = cfg.SaveDir + "/result_" + std::to_string(i) +".png";
+		if (result[i].iou_pred < cfg.SegThreshold)
+		{
+			std::cout << "[INFO] Result IoU prediction lower than segthreshold" << std::endl;
+			continue;
+		}
+		std::string save_path = cfg.SaveDir + "/result_" + std::to_string(index) +".png";
 		cv::imwrite(save_path, result[i].mask);
-		std::cout << "=> Result save as " << save_path << " Iou prediction is " << result[i].iou_pred << std::endl;
+		std::cout << "[INFO] Result save as " << save_path << " Iou prediction is " << result[i].iou_pred << std::endl;
 	}
 	return result;
 }
@@ -250,7 +256,7 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 	//}
 
 #if _WIN32
-	std::cout << "Env _WIN32 change modelpath from multi byte to wide char ..." << std::endl;
+	std::cout << "[ENV] Env _WIN32 change modelpath from multi byte to wide char ..." << std::endl;
 	const wchar_t* encoder_modelpath = multi_Byte_To_Wide_Char(cfg.EncoderModelPath);
 	const wchar_t* decoder_modelpath = multi_Byte_To_Wide_Char(cfg.DecoderModelPath);
 #else
@@ -259,17 +265,17 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 #endif // _WIN32
 
 	// 创建Session并加载模型进内存
-	std::cout << "=> Using Onnxruntime C++ API." << std::endl;
-	std::cout << "Building SegmentAnything Model Encoder ... " << std::endl;
+	std::cout << "[INFO] Using Onnxruntime C++ API." << std::endl;
+	std::cout << "[INFO] Building SegmentAnything Model Encoder ... " << std::endl;
 	EncoderSession = std::make_unique<Ort::Session>(env, encoder_modelpath, session_options);
 	if (EncoderSession->GetInputCount() != 1 || EncoderSession->GetOutputCount() != 1) {
-		std::cerr << "Preprocessing model not loaded (invalid input/output count)" << std::endl;
+		std::cerr << "[INFO] Preprocessing model not loaded (invalid input/output count)" << std::endl;
 		return;
 	}
-	std::cout << "Building SegmentAnything Model Decoder ... " << std::endl;
+	std::cout << "[INFO] Building SegmentAnything Model Decoder ... " << std::endl;
 	DecoderSession = std::make_unique<Ort::Session>(env, decoder_modelpath, session_options);
 	if (DecoderSession->GetInputCount() != 6 || DecoderSession->GetOutputCount() != 3) {
-		std::cerr << "Model not loaded (invalid input/output count)" << std::endl;
+		std::cerr << "[INFO] Model not loaded (invalid input/output count)" << std::endl;
 		return;
 	}
 
@@ -279,7 +285,7 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 		std::cerr << "Preprocessing model not loaded (invalid shape)" << std::endl;
 		return;
 	}
-	std::cout << "=> Build EncoderSession and DecoderSession successfully." << std::endl;
+	std::cout << "[INFO] Build EncoderSession and DecoderSession successfully." << std::endl;
 	InitModelSession = true;
 
 	delete encoder_modelpath;
