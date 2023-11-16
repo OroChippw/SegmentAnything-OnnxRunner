@@ -98,20 +98,11 @@ int main(int argc , char* argv[])
         }
     }
 
-    unsigned int box_top_left_x , box_top_left_y , box_bot_right_x , box_bot_right_y;
-    if (USE_BOXINFO)
-    {
-        box_top_left_x = 1333;
-        box_top_left_y = 815;
-        box_bot_right_x = 2048;
-        box_bot_right_y = 1550; 
-    }
-
     /* <------ CONFIG END ------> */
 
     Configuration cfg;
     cfg.EncoderModelPath = encoder_model_path;
-    cfg.DecoderModelPath = decoder_model_path;
+    cfg.DecoderModelPath = decoder_model_path; 
     cfg.SaveDir = save_dir;
     cfg.SegThreshold = threshold;
     cfg.UseSingleMask = USE_SINGLEMASK;
@@ -121,26 +112,38 @@ int main(int argc , char* argv[])
     SAMOnnxRunner Segmentator(std::thread::hardware_concurrency());
     Segmentator.InitOrtEnv(cfg);
 
-    ClickInfo clickinfo_test;
-    BoxInfo boxinfo_test;
-
-    BoxInfo boxinfo(box_top_left_x , box_top_left_y , box_bot_right_x , box_bot_right_y);
     cv::Mat srcImage = cv::imread(image_path, -1);
     cv::Mat outImage = srcImage.clone();
+    unsigned int box_top_left_x , box_top_left_y , box_bot_right_x , box_bot_right_y;
+
     if (USE_DEMO)
     {
         std::cout << "[WELCOME] Segment Anything Onnx Runner Demo" << std::endl;
         auto windowName = "Segment Anything Onnx Runner Demo";
+
+        ClickInfo clickinfo;
+        MouseParams mouseparams;
+
         cv::namedWindow(windowName, 0);
         cv::setMouseCallback(
-            windowName , GetClick_handler , reinterpret_cast<void*>(&clickinfo_test)
+            windowName , GetClick_handler , reinterpret_cast<void*>(&clickinfo)
         );
+
+        if (USE_BOXINFO)
+        {
+            box_top_left_x = 1333;
+            box_top_left_y = 815;
+            box_bot_right_x = 2048;
+            box_bot_right_y = 1550; 
+        }
+        BoxInfo boxinfo(box_top_left_x , box_top_left_y , box_bot_right_x , box_bot_right_y);
+
         bool RunnerWork = true;
         while (RunnerWork)
         {
-            if (clickinfo_test.pt.x > 0 && clickinfo_test.pt.y > 0)
+            if (clickinfo.pt.x > 0 && clickinfo.pt.y > 0)
             {
-                auto maskinfo = Segmentator.InferenceSingleImage(cfg, srcImage, clickinfo_test, boxinfo);
+                auto maskinfo = Segmentator.InferenceSingleImage(cfg, srcImage, clickinfo, boxinfo);
                 unsigned int index = 0;
 
                 // apply mask to image
@@ -157,8 +160,8 @@ int main(int argc , char* argv[])
                     }
                 }
             }
-            clickinfo_test.pt.x = 0;
-            clickinfo_test.pt.y = 0;
+            clickinfo.pt.x = 0;
+            clickinfo.pt.y = 0;
             cv::imshow(windowName, outImage);
             int key = cv::waitKeyEx(100);
             switch (key) {

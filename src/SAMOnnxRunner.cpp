@@ -18,9 +18,17 @@ cv::Mat SAMOnnxRunner::Image_PreProcess(cv::Mat srcImage)
 	std::cout << "[INFO] PreProcess Image ..." << std::endl;
 	cv::Mat rgbImage;
 	cv::cvtColor(srcImage, rgbImage, cv::COLOR_BGR2RGB);
-	cv::Mat resizeImage = ResizeLongestSide_apply_image(srcImage, EncoderInputSize);
-	// Normalization
-	//resizeImage.convertTo(resizeImage, CV_32FC3, 1.0f / 255.0f, 0.f);
+
+	cv::Mat floatImage;
+	rgbImage.convertTo(floatImage, CV_32FC3);
+	cv::Mat pixelMean = cv::Mat::ones(cv::Size(1024, 1024), CV_32FC3);
+	cv::Mat pixelStd = cv::Mat::ones(cv::Size(1024, 1024), CV_32FC3);
+	pixelMean = cv::Scalar(123.675, 116.28, 103.53);
+	pixelStd = cv::Scalar(58.395, 57.12, 57.375);
+	floatImage -= pixelMean;
+	floatImage /= pixelStd;
+
+	cv::Mat resizeImage = ResizeLongestSide_apply_image(floatImage, EncoderInputSize);
 
 	int pad_h = EncoderInputSize - resizeImage.rows;
 	int pad_w = EncoderInputSize - resizeImage.cols;
