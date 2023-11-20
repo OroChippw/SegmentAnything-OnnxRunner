@@ -1,6 +1,6 @@
 /*
     # Author : OroChippw
-    # Last Change : 2023.11.14
+    # Last Change : 2023.11.20
 */
 #include <map>
 #include <iostream>
@@ -20,7 +20,7 @@ int main(int argc , char* argv[])
     /* <------ CONFIG START ------> */
     // Define a vector to store parameter names and parameter values
     std::map<std::string , std::string> arguments;
-    for (unsigned int i = 1 ; i < argc ; i++)
+    for (int i = 1 ; i < argc ; i++)
     {
         std::string arg = argv[i];
         if (arg.substr(0 , 2) == "--")
@@ -39,7 +39,7 @@ int main(int argc , char* argv[])
 
     std::string encoder_model_path , decoder_model_path;
     std::string image_path , save_dir;
-    bool USE_BOXINFO = true , USE_DEMO = true , USE_SINGLEMASK = false;
+    bool USE_BOXINFO = false , USE_DEMO = true , USE_SINGLEMASK = false;
     double threshold = 0.9;
 
     for (const auto& arg : arguments)
@@ -114,7 +114,6 @@ int main(int argc , char* argv[])
 
     cv::Mat srcImage = cv::imread(image_path, -1);
     cv::Mat outImage = srcImage.clone();
-    unsigned int box_top_left_x , box_top_left_y , box_bot_right_x , box_bot_right_y;
 
     if (USE_DEMO)
     {
@@ -124,29 +123,23 @@ int main(int argc , char* argv[])
         ClickInfo clickinfo;
         MouseParams mouseparams;
 
-        cv::namedWindow(windowName, 0);
-        cv::setMouseCallback(
-            windowName , GetClick_handler , reinterpret_cast<void*>(&clickinfo)
-        );
+        mouseparams.image = outImage;
+        cv::namedWindow(windowName, cv::WINDOW_NORMAL);
+        cv::resizeWindow(windowName , 1024 , 768);
 
-        if (USE_BOXINFO)
-        {
-            box_top_left_x = 1333;
-            box_top_left_y = 815;
-            box_bot_right_x = 2048;
-            box_bot_right_y = 1550; 
-        }
-        BoxInfo boxinfo(box_top_left_x , box_top_left_y , box_bot_right_x , box_bot_right_y);
+        cv::setMouseCallback(
+            windowName , GetClick_handler , reinterpret_cast<void*>(&mouseparams)
+        );
 
         bool RunnerWork = true;
         while (RunnerWork)
         {
-            if (clickinfo.pt.x > 0 && clickinfo.pt.y > 0)
+            if (mouseparams.clickinfo.pt.x > 0 && mouseparams.clickinfo.pt.y > 0)
             {
-                auto maskinfo = Segmentator.InferenceSingleImage(cfg, srcImage, clickinfo, boxinfo);
+                auto maskinfo = Segmentator.InferenceSingleImage(cfg, srcImage, mouseparams.clickinfo , mouseparams.boxinfo);
                 unsigned int index = 0;
 
-                // apply mask to image
+                // Apply mask to image
                 outImage = cv::Mat::zeros(srcImage.size(), CV_8UC3);
                 for (int i = 0; i < srcImage.rows; i++) {
                     for (int j = 0; j < srcImage.cols; j++) {
@@ -154,19 +147,21 @@ int main(int argc , char* argv[])
                         {
                             index = 0;
                         }
-                        auto bFront = maskinfo[index].mask.at<uchar>(i, j) > 0;
-                        float factor = bFront ? 1.0 : 0.5;
+                        // auto bFront = maskinfo[index].mask.at<uchar>(i, j) > 0;
+                        double factor = maskinfo[index].mask.at<uchar>(i, j) > 0 ? 1.0 : 0.5;
                         outImage.at<cv::Vec3b>(i, j) = srcImage.at<cv::Vec3b>(i, j) * factor;
                     }
                 }
             }
-            clickinfo.pt.x = 0;
-            clickinfo.pt.y = 0;
+            mouseparams.clickinfo.pt.x = 0;
+            mouseparams.clickinfo.pt.y = 0;
+
             cv::imshow(windowName, outImage);
+
             int key = cv::waitKeyEx(100);
             switch (key) {
             case 27:
-            case 'q': {
+            case 'q': { // 
                 RunnerWork = false;
             } break;
             case 'c': {

@@ -44,7 +44,7 @@ private:
 	int EncoderInputSize = 1024;
 
 	// Decoder Settings Params
-	float SegThreshold;
+	double SegThreshold;
 
 	// Env Settings Params
 	std::string device{ "cpu" };
@@ -74,6 +74,7 @@ protected:
 	bool Encoder_BuildEmbedding(const cv::Mat& Image);
 	
 	std::vector<MatInfo> Decoder_Inference(Configuration cfg , cv::Mat srcIamge , ClickInfo clickinfo , BoxInfo boxinfo);
+
 
 public:
 	explicit SAMOnnxRunner(unsigned int num_threads = 1);

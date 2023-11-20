@@ -33,8 +33,8 @@ ClickInfo ResizeLongestSide_apply_coord(cv::Mat Image , ClickInfo clickinfo , in
 	const unsigned int w = Image.cols;
 	std::tuple<int, int> newShape = GetPreProcessShape(h, w, encoder_input_size);
 
-	float new_w = std::get<1>(newShape);
-	float new_h = std::get<0>(newShape);
+	float new_w = static_cast<float>(std::get<1>(newShape));
+	float new_h = static_cast<float>(std::get<0>(newShape));
 
 	clickinfo.pt.x = clickinfo.pt.x * float(new_w / w);
 	clickinfo.pt.y = clickinfo.pt.y * float(new_h / h);

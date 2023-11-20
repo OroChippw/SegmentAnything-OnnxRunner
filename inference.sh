@@ -10,4 +10,8 @@ main.exe \
 --threshold 0.9 # Set threshold , default 0.9
 
 # Sample
-Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\input\\1_1-2.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output
+Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\input\\1_1-2.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_boxinfo true --use_demo true
+
+Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\assets\\truck.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_demo false --use_boxinfo true
+
+Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_h\\sam_preprocess-h.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_h\\sam_vit_h.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\assets\\dog.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_demo true

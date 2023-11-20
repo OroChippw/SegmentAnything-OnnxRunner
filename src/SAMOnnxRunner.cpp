@@ -5,7 +5,7 @@
 #include <chrono>
 #include <random>
 #include <onnxruntime_cxx_api.h>
-//#include <cuda_provider_factory.h>  // 若在GPU环境下运行可以使用cuda进行加速
+//#include <cuda_provider_factory.h>  // If running in a GPU environment, cuda can be used for acceleration.
 
 #include "SAMOnnxRunner.h"
 #include "transform.h"
@@ -21,8 +21,8 @@ cv::Mat SAMOnnxRunner::Image_PreProcess(cv::Mat srcImage)
 
 	cv::Mat floatImage;
 	rgbImage.convertTo(floatImage, CV_32FC3);
-	cv::Mat pixelMean = cv::Mat::ones(cv::Size(1024, 1024), CV_32FC3);
-	cv::Mat pixelStd = cv::Mat::ones(cv::Size(1024, 1024), CV_32FC3);
+	cv::Mat pixelMean = cv::Mat::ones(cv::Size(floatImage.cols, floatImage.rows), CV_32FC3);
+	cv::Mat pixelStd = cv::Mat::ones(cv::Size(floatImage.cols, floatImage.rows), CV_32FC3);
 	pixelMean = cv::Scalar(123.675, 116.28, 103.53);
 	pixelStd = cv::Scalar(58.395, 57.12, 57.375);
 	floatImage -= pixelMean;
@@ -59,11 +59,11 @@ bool SAMOnnxRunner::Encoder_BuildEmbedding(const cv::Mat& Image)
 	std::cout << "[INFO] Encoder BuildEmbedding Start ..." << std::endl;
 	for (int i = 0; i < EncoderInputShape[2]; i++) {
 		for (int j = 0; j < EncoderInputShape[3]; j++) {
-			inputTensorValues[i * EncoderInputShape[3] + j] = Image.at<cv::Vec3b>(i, j)[2];
+			inputTensorValues[i * EncoderInputShape[3] + j] = Image.at<cv::Vec3f>(i, j)[2];
 			inputTensorValues[EncoderInputShape[2] * EncoderInputShape[3] + i * EncoderInputShape[3] + j] =
-				Image.at<cv::Vec3b>(i, j)[1];
+				Image.at<cv::Vec3f>(i, j)[1];
 			inputTensorValues[2 * EncoderInputShape[2] * EncoderInputShape[3] + i * EncoderInputShape[3] + j] =
-				Image.at<cv::Vec3b>(i, j)[0];
+				Image.at<cv::Vec3f>(i, j)[0];
 		}
 	}
 
@@ -101,7 +101,7 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 	ClickInfo applyCoords = ResizeLongestSide_apply_coord(srcImage, clickinfo, EncoderInputSize);
 	std::cout << "[INFO] (applyCoords.pt.x) : " << (applyCoords.pt.x) << " (applyCoords.pt.y) : " << (applyCoords.pt.y) << std::endl;
 	float inputPointValues[] = { (float)applyCoords.pt.x, (float)applyCoords.pt.y };
-	float inputLabelValues[] = {applyCoords.positive};
+	float inputLabelValues[] = {static_cast<float>(applyCoords.positive)};
 
 
 	BoxInfo applyBoxs = ResizeLongestSide_apply_box(srcImage, boxinfo, EncoderInputSize);
@@ -112,7 +112,7 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 								  (float)applyBoxs.left_top.x, (float)applyBoxs.left_top.y ,\
 								  (float)applyBoxs.right_bot.x, (float)applyBoxs.right_bot.y ,
 								};
-	float inputLabelsValues[] = {applyCoords.positive , (float)2 , (float)3 };
+	float inputLabelsValues[] = {static_cast<float>(applyCoords.positive) , (float)2 , (float)3 };
 
 
 	const size_t maskInputSize = 256 * 256;
@@ -174,10 +174,10 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 	auto iou_pred_dims = iou_predictions_.GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
 	auto low_res_dims = low_res_masks_.GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
 
-	const unsigned int Resizemasks_batch = mask_dims.at(0);
-	const unsigned int Resizemasks_nums = mask_dims.at(1);
-	const unsigned int Resizemasks_width = mask_dims.at(2);
-	const unsigned int Resizemasks_height = mask_dims.at(3);
+	const int Resizemasks_batch = static_cast<int>(mask_dims.at(0));
+	const int Resizemasks_nums = static_cast<int>(mask_dims.at(1));
+	const int Resizemasks_width = static_cast<int>(mask_dims.at(2));
+	const int Resizemasks_height = static_cast<int>(mask_dims.at(3));
 
 	std::cout << "[INFO] Resizemasks_batch : " << Resizemasks_batch << " Resizemasks_nums : " << Resizemasks_nums \
 		<< " Resizemasks_width : " << Resizemasks_width << " Resizemasks_height : " << Resizemasks_height << std::endl;
@@ -189,16 +189,17 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 
 
 	std::vector<MatInfo> masks_list;
-	for (unsigned int index = 0 ;  index < Resizemasks_nums ; index++)
+	for (int index = 0 ;  index < Resizemasks_nums ; index++)
 	{
 		cv::Mat mask(srcImage.rows, srcImage.cols, CV_8UC1);
-		for (unsigned int i = 0; i < mask.rows; i++) 
+		for (int i = 0; i < mask.rows; i++) 
 		{
-			for (unsigned int j = 0; j < mask.cols; j++)
+			for (int j = 0; j < mask.cols; j++)
 			{
 				mask.at<uchar>(i, j) = masks[i * mask.cols + j + index * mask.rows * mask.cols] > 0 ? 255 : 0;
 			}
 		}
+
 		MatInfo mat_info;
 		mat_info.mask = mask;
 		mat_info.iou_pred = *(iou_predictions++);
@@ -208,6 +209,7 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 
 }
 
+
 std::vector<MatInfo> SAMOnnxRunner::InferenceSingleImage(Configuration cfg , const cv::Mat& srcImage , ClickInfo clickInfo , BoxInfo boxinfo)
 {
 	if (srcImage.empty())
@@ -216,6 +218,7 @@ std::vector<MatInfo> SAMOnnxRunner::InferenceSingleImage(Configuration cfg , con
 	}
 	std::cout << "[INFO] Image info : srcImage width : " << srcImage.cols << " srcImage height :  " << srcImage.rows << std::endl;
 	cv::Mat rgbImage = Image_PreProcess(srcImage);
+
 	if (!InitEncoderEmbedding)
 	{
 		std::cout << "[INFO] InitEncoder is false , Preprocess before encoder image embedding ... " << std::endl;
@@ -226,6 +229,10 @@ std::vector<MatInfo> SAMOnnxRunner::InferenceSingleImage(Configuration cfg , con
 	if (result.empty())
 	{
 		throw  "[ERROR] No result !" ;
+	}else {
+		std::sort(result.begin(), result.end(), [](const MatInfo& a, const MatInfo& b) {
+        	return a.iou_pred > b.iou_pred;
+		});
 	}
 
 	std::cout << "[INFO] Generate result mask size is " << result.size() << std::endl;
@@ -235,17 +242,17 @@ std::vector<MatInfo> SAMOnnxRunner::InferenceSingleImage(Configuration cfg , con
 	{	
 		if (result[i].iou_pred < cfg.SegThreshold)
 		{
-			std::cout << "[INFO] Result IoU prediction lower than segthreshold" << std::endl;
+			std::cout << "[INFO] Result IoU prediction lower than segthreshold , only " << result[i].iou_pred << std::endl;
 			continue;
 		}
-		std::string save_path = cfg.SaveDir + "/result_" + std::to_string(index) +".png";
+		std::string save_path = cfg.SaveDir + "/result_" + std::to_string(i) +".png";
 		cv::imwrite(save_path, result[i].mask);
 		std::cout << "[INFO] Result save as " << save_path << " Iou prediction is " << result[i].iou_pred << std::endl;
 	}
 	return result;
 }
 
-void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
+void SAMOnnxRunner::InitOrtEnv(Configuration cfg)
 {
 	// 初始化OnnxRuntime运行环境
 	env = Ort::Env(ORT_LOGGING_LEVEL_WARNING, "SegmentAnythingModel");
@@ -290,7 +297,7 @@ void SAMOnnxRunner::InitOrtEnv(Configuration cfg) throw (std::runtime_error)
 	EncoderInputShape = EncoderSession->GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
 	EncoderOutputShape = EncoderSession->GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
 	if (EncoderInputShape.size() != 4 || EncoderOutputShape.size() != 4) {
-		std::cerr << "Preprocessing model not loaded (invalid shape)" << std::endl;
+		std::cerr << "[ERROR] Preprocessing model not loaded (invalid shape)" << std::endl;
 		return;
 	}
 	std::cout << "[INFO] Build EncoderSession and DecoderSession successfully." << std::endl;

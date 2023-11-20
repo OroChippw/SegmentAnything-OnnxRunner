@@ -3,7 +3,7 @@
 
 struct Configuration
 {
-	float SegThreshold; // Segmentation Confidence Threshold(分割阈值)
+	double SegThreshold; // Segmentation Confidence Threshold
 	bool UseSingleMask;
 	bool UseBoxInfo;
 	std::string EncoderModelPath;
