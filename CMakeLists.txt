@@ -3,7 +3,6 @@ project(SegmentAnything-OnnxRunner)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (MSVC)
     # Set the MSVC input code encoding format to utf-8
@@ -27,15 +26,8 @@ set(OPENCV_DIR  ${CMAKE_SOURCE_DIR}/third_party/opencv480/build)
 message(STATUS "OPENCV_DIR Path: ${OPENCV_DIR}")
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${OPENCV_DIR}/include)
-
-# Choose OpenCV library based on build type
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    link_directories("${OPENCV_DIR}/x64/vc16/lib")
-    set(OpenCV_LIB opencv_world480d) # Debug
-else()
-    link_directories("${OPENCV_DIR}/x64/vc16/lib")
-    set(OpenCV_LIB opencv_world480) # Release
-endif()
+link_directories("${OPENCV_DIR}/x64/vc16/lib")
+set(OpenCV_LIB opencv_world480d)
 
 
 # compile own file

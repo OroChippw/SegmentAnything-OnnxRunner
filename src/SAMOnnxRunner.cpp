@@ -18,16 +18,22 @@ cv::Mat SAMOnnxRunner::Image_PreProcess(cv::Mat srcImage)
 	std::cout << "[INFO] PreProcess Image ..." << std::endl;
 	cv::Mat rgbImage;
 	cv::cvtColor(srcImage, rgbImage, cv::COLOR_BGR2RGB);
-
+	
 	cv::Mat floatImage;
-	rgbImage.convertTo(floatImage, CV_32FC3);
-	cv::Mat pixelMean = cv::Mat::ones(cv::Size(floatImage.cols, floatImage.rows), CV_32FC3);
-	cv::Mat pixelStd = cv::Mat::ones(cv::Size(floatImage.cols, floatImage.rows), CV_32FC3);
-	pixelMean = cv::Scalar(123.675, 116.28, 103.53);
-	pixelStd = cv::Scalar(58.395, 57.12, 57.375);
-	floatImage -= pixelMean;
-	floatImage /= pixelStd;
 
+	rgbImage.convertTo(floatImage, CV_32FC3);
+
+	cv::Mat pixel_Mean = cv::Mat::ones(
+		cv::Size(floatImage.cols, floatImage.rows), CV_32FC3);
+	cv::Mat pixel_Std = cv::Mat::ones(
+		cv::Size(floatImage.cols, floatImage.rows), CV_32FC3);
+
+	pixel_Mean = cv::Scalar(123.675, 116.28, 103.53);
+	pixel_Std = cv::Scalar(58.395, 57.12, 57.375);
+	
+	floatImage -= pixel_Mean;
+	floatImage /= pixel_Std;
+	
 	cv::Mat resizeImage = ResizeLongestSide_apply_image(floatImage, EncoderInputSize);
 
 	int pad_h = EncoderInputSize - resizeImage.rows;
@@ -179,14 +185,18 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 	const int Resizemasks_width = static_cast<int>(mask_dims.at(2));
 	const int Resizemasks_height = static_cast<int>(mask_dims.at(3));
 
-	std::cout << "[INFO] Resizemasks_batch : " << Resizemasks_batch << " Resizemasks_nums : " << Resizemasks_nums \
-		<< " Resizemasks_width : " << Resizemasks_width << " Resizemasks_height : " << Resizemasks_height << std::endl;
+	/*
+		std::cout << "[INFO] Resizemasks_batch : " << Resizemasks_batch << " Resizemasks_nums : " << Resizemasks_nums \
+			<< " Resizemasks_width : " << Resizemasks_width << " Resizemasks_height : " << Resizemasks_height << std::endl;
 
-	std::cout << "[INFO] Gemmiou_predictions_dim_0 : " << iou_pred_dims.at(0) << " Generate mask num : " << iou_pred_dims.at(1) << std::endl;
+		std::cout << "[INFO] Gemmiou_predictions_dim_0 : " << iou_pred_dims.at(0) \
+			<< " Generate mask num : " << iou_pred_dims.at(1) << std::endl;
 
-	std::cout << "[INFO] Reshapelow_res_masks_dim_0 : " << low_res_dims.at(0) << " Reshapelow_res_masks_dim_1 : " << low_res_dims.at(1) << std::endl;
-	std::cout << "[INFO] Reshapelow_res_masks_dim_2 : " << low_res_dims.at(2) << " Reshapelow_res_masks_dim_3 : " << low_res_dims.at(3) << std::endl;
-
+		std::cout << "[INFO] Reshapelow_res_masks_dim_0 : " << low_res_dims.at(0) << " Reshapelow_res_masks_dim_1 : " \
+			<< low_res_dims.at(1) << std::endl;
+		std::cout << "[INFO] Reshapelow_res_masks_dim_2 : " << low_res_dims.at(2) << " Reshapelow_res_masks_dim_3 : " \ 
+			<< low_res_dims.at(3) << std::endl;
+	*/
 
 	std::vector<MatInfo> masks_list;
 	for (int index = 0 ;  index < Resizemasks_nums ; index++)

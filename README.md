@@ -1,16 +1,23 @@
 # SegmentAnything-OnnxRunner
-## Introduction
+<div align="center">
+  <div style="display: flex; justify-content: center;">
+    <img src="assets/dog.jpg" width="400" style="margin-right: 5px;"/>
+    <img src="assets/truck.jpg" width="400" style="margin-right: 5px;"/>
+    <!-- <img src="assets/Maze01_CAD.jpg" width="300" /> -->
+  </div>
+</div>
+
+## Introduction 📰
 SegmentAnything-OnnxRunner is an example using Meta AI Research's SAM onnx model.The Segment Anything Model (SAM) produces high quality object masks from input prompts such as points or boxes, and it can be used to generate masks for all objects in an image.This repository is used to record the experiment data that run SAM onnx model on CPU/GPU.At the same time, the encoder and decoder of SAM are decoupled in this repository.
 
 Currently, the interface only supports GPU execution.The specific experimental data and equipment used are shown below. And the inferface is only supported on Windows and may encounter issues when running on Linux.
 
-## Development Enviroments
->  - Windows 10 Professional 
->  - CUDA v11.3
->  - cmake version 3.26.2
+## Development Enviroments🖥️
+The description only represents the development environment of this repository and does not represent any software version restriction information.
+* Windows 10 Professional / CUDA v11.3 / cmake version 3.26.2
+* Windows 11 Home / CUDA v11.7 / cmake version 3.27.1
 
-## Quick Start
-
+## Quick Start💡
 ### Requirements
 ``` 
 # onnxruntime 3rdparty
@@ -35,7 +42,34 @@ cmake --build .
 ### Model Checkpoints(TODO)
 The SAM encoder and decoder are decoupled and quantized. After decoupling, if you perform multiple interactive clicks on a picture, you don't need to re-encode it. The model with -quantize is the quantized version
 
-### Experiment Record
+### Parameters
+| Parameters | Required | Description  |
+|:------|:----:|:------:|
+| --encoder_model_path | ✅ | TODO |
+| --decoder_model_path | ✅ | TODO |
+| --image_path | ✅ | TODO |
+| --save_dir | / | Default ../output , if  |
+| --use_demo | / | Default |
+| --use_boxinfo | / | Default False |
+| --use_singlemask | / | Default False |
+| --threshold | / | Default 0.9 |
+
+```
+$ Debug/main.exe --encoder_model_path --decoder_model_path
+$ Release/main.exe --encoder_model_path --decoder_model_path
+```
+### Operations
+| Operation | Mode | Description |
+|:------:|:----:|:------:| :------:|
+| Mouse Left Button Down | use_demo | Default 0.9 |
+| Mouse Right Button Down | use_demo | Default 0.9 |
+| Keyboard Shift Key + Mouse Left Button Down | use_demo && use_boxinfo | Default 0.9 |
+
+
+
+
+
+## Experiment Record
 Environment Device : i5-13600KF + NVIDIA GeForce RTX 3060（12GB）
 Input image resolution : 1920 * 1080 * 3  
 All models are available in [Baidu Pan](https://pan.baidu.com/s/1j0z1mHDOshOCcQWwetmFnQ?pwd=ljgr) (code: ljgr).    

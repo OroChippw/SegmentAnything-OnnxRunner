@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <opencv2/opencv.hpp>
 
+#include "args.h"
 #include "SAMOnnxRunner.h"
 #include "interactive.h"
 
@@ -120,7 +121,6 @@ int main(int argc , char* argv[])
         std::cout << "[WELCOME] Segment Anything Onnx Runner Demo" << std::endl;
         auto windowName = "Segment Anything Onnx Runner Demo";
 
-        ClickInfo clickinfo;
         MouseParams mouseparams;
 
         mouseparams.image = outImage;
@@ -143,11 +143,6 @@ int main(int argc , char* argv[])
                 outImage = cv::Mat::zeros(srcImage.size(), CV_8UC3);
                 for (int i = 0; i < srcImage.rows; i++) {
                     for (int j = 0; j < srcImage.cols; j++) {
-                        if (cfg.UseSingleMask)
-                        {
-                            index = 0;
-                        }
-                        // auto bFront = maskinfo[index].mask.at<uchar>(i, j) > 0;
                         double factor = maskinfo[index].mask.at<uchar>(i, j) > 0 ? 1.0 : 0.5;
                         outImage.at<cv::Vec3b>(i, j) = srcImage.at<cv::Vec3b>(i, j) * factor;
                     }
@@ -161,10 +156,10 @@ int main(int argc , char* argv[])
             int key = cv::waitKeyEx(100);
             switch (key) {
             case 27:
-            case 'q': { // 
+            case 'q': { // quit Segment Anything Onnx Runner Demo
                 RunnerWork = false;
             } break;
-            case 'c': {
+            case 'c': { // TODO
                 outImage = srcImage.clone();
             } break;
             }

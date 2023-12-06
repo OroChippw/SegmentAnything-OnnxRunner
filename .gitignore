@@ -24,3 +24,6 @@ onnx_models
 *.onnx
 *.tflite
 
+# inference 
+inference.sh
+

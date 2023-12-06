@@ -8,6 +8,9 @@
 
 std::tuple<int , int> GetPreProcessShape(int old_h , int old_w , int long_side_length)
 {
+	/*
+		Compute the output size given input size and target long side length.
+	*/
 	double scale = long_side_length * 1.0 / MAX(old_h , old_w);
 	int new_h = (int)(old_h * scale + 0.5);
 	int new_w = (int)(old_w * scale + 0.5);
