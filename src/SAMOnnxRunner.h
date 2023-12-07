@@ -26,6 +26,8 @@ struct ClickInfo
 {
 	cv::Point pt;
 	bool positive;
+
+	ClickInfo() : pt(-1, -2), positive(false) {}
 };
 
 struct MatInfo
@@ -58,13 +60,16 @@ private:
 		OrtArenaAllocator, OrtMemTypeDefault
 	);
 
-
 	const char* DecoderInputNames[6]{ "image_embeddings", "point_coords",   "point_labels",
 							 "mask_input", "has_mask_input", "orig_im_size" },
 		* DecoderOutputNames[3]{ "masks", "iou_predictions", "low_res_masks" };
-
+	
 	// Image Eembedding
 	std::vector<float> image_embedding;
+
+	// low_res_masks for mask_input
+	std::vector<Ort::Value> tensors_buffer;
+
 
 protected:
 	const unsigned int num_threads;

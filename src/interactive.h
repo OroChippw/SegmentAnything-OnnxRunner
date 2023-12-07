@@ -42,7 +42,7 @@ void GetClick_handler(int event, int x, int y, int flags, void* data)
         (*mouseparams).clickinfo.pt.y = y;
         (*mouseparams).clickinfo.positive = 1;
 
-        cv::circle(tempImage , cv::Point(x , y) , 5 , cv::Scalar(0 , 255 , 0) , -1);
+        cv::circle(tempImage , cv::Point(x , y) , 7 , cv::Scalar(0 , 255 , 0) , -1);
         std::cout << "[PROMPT] Left Button Pressed. Coordinates: (" << x << " , " << y << ")" << std::endl;
     } else if (event == cv::EVENT_RBUTTONDOWN)
     {
@@ -51,7 +51,7 @@ void GetClick_handler(int event, int x, int y, int flags, void* data)
         (*mouseparams).clickinfo.pt.y = y;
         (*mouseparams).clickinfo.positive = 0;
 
-        cv::circle(tempImage , cv::Point(x , y) , 5 , cv::Scalar(0 , 0 , 255) , -1);
+        cv::circle(tempImage , cv::Point(x , y) , 7 , cv::Scalar(0 , 0 , 255) , -1);
         std::cout << "[PROMPT] Right Button Pressed. Coordinates: (" << x << " , " << y << ")" << std::endl;
     } else if (event == cv::EVENT_LBUTTONUP)
     {

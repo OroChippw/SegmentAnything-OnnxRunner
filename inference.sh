@@ -22,4 +22,15 @@ Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\m
 
 Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\assets\\dog.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_demo true
 
-## 
+## vit-l truck.jpg
+Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\assets\\truck.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_demo true --use_boxinfo true
+
+Release\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\assets\\truck.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_demo true --use_boxinfo true
+
+
+## vit-l 1_1-2.jpg
+Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\input\\4_2-2.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_demo true --use_boxinfo true
+
+Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\input\\1_1-2.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_demo true --use_boxinfo true
+
+Debug\main.exe --encoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\encoder\\vit_l\\sam_vit_l_0b3195_encoder.onnx --decoder_model_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\models\\decoder\\vit_l\\sam_vit_l_0b3195_decoder.onnx --image_path D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\input\\1_1-2.jpg --save_dir D:\\OroChiLab\\SegmentAnything-OnnxRunner\\data\\output --use_demo true --use_boxinfo true

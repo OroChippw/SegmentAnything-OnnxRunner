@@ -148,7 +148,30 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 		inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
 			memory_info_handler, inputLabelValues, 1, pointLabelsShape.data(), pointLabelsShape.size()));
 	}
-	
+	if (cfg.HasMaskInput && tensors_buffer[1] != nullptr && tensors_buffer[2] != nullptr)
+	{
+		hasMaskValues[0] = 1;
+		const float* IoU_Prediction_TensorData = tensors_buffer[1].GetTensorMutableData<float>();
+		float max_iou_value = 0;
+		int max_iou_idx = -1;
+		// 筛出IoU最高的mask作为mask_input
+		for (int i = 0 ; i < 4 ; i++)
+		{
+			if (IoU_Prediction_TensorData[i] > max_iou_value)
+			{
+				max_iou_value = IoU_Prediction_TensorData[i];
+				max_iou_idx = i;
+				// std::cout << "max_iou_value : " << max_iou_value  << "max_iou_idx :  " << max_iou_idx << std::endl;
+			}
+		}
+		const float* MaskTensorData = tensors_buffer[2].GetTensorMutableData<float>();
+		std::copy(MaskTensorData + max_iou_idx * maskInputSize , MaskTensorData + max_iou_idx * maskInputSize + maskInputSize, maskInputValues);
+		std::cout << "[INFO] HasMaskInput and tensors_buffer is not empty , Use the mask output from the previous run as mask_input"<< std::endl;
+	}else 
+	{
+		memset(maskInputValues, 0, sizeof(maskInputValues));
+	}
+
 	inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
 		memory_info_handler, maskInputValues, maskInputSize, maskInputShape.data(), maskInputShape.size()));
 	inputTensorsSam.push_back(Ort::Value::CreateTensor<float>(
@@ -171,10 +194,10 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 	auto iou_predictions = DecoderOutputTensors[1].GetTensorMutableData<float>();
 	auto low_res_masks = DecoderOutputTensors[2].GetTensorMutableData<float>();
 
-
 	Ort::Value& masks_ = DecoderOutputTensors[0];
 	Ort::Value& iou_predictions_ = DecoderOutputTensors[1];
 	Ort::Value& low_res_masks_ = DecoderOutputTensors[2];
+	tensors_buffer = std::move(DecoderOutputTensors);
 
 	auto mask_dims = masks_.GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
 	auto iou_pred_dims = iou_predictions_.GetTypeInfo().GetTensorTypeAndShapeInfo().GetShape();
@@ -185,19 +208,17 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 	const int Resizemasks_width = static_cast<int>(mask_dims.at(2));
 	const int Resizemasks_height = static_cast<int>(mask_dims.at(3));
 
-	/*
-		std::cout << "[INFO] Resizemasks_batch : " << Resizemasks_batch << " Resizemasks_nums : " << Resizemasks_nums \
-			<< " Resizemasks_width : " << Resizemasks_width << " Resizemasks_height : " << Resizemasks_height << std::endl;
+	std::cout << "[INFO] Resizemasks_batch : " << Resizemasks_batch << " Resizemasks_nums : " << Resizemasks_nums \
+		<< " Resizemasks_width : " << Resizemasks_width << " Resizemasks_height : " << Resizemasks_height << std::endl;
 
-		std::cout << "[INFO] Gemmiou_predictions_dim_0 : " << iou_pred_dims.at(0) \
-			<< " Generate mask num : " << iou_pred_dims.at(1) << std::endl;
+	std::cout << "[INFO] Gemmiou_predictions_dim_0 : " << iou_pred_dims.at(0) \
+		<< " Generate mask num : " << iou_pred_dims.at(1) << std::endl;
 
-		std::cout << "[INFO] Reshapelow_res_masks_dim_0 : " << low_res_dims.at(0) << " Reshapelow_res_masks_dim_1 : " \
-			<< low_res_dims.at(1) << std::endl;
-		std::cout << "[INFO] Reshapelow_res_masks_dim_2 : " << low_res_dims.at(2) << " Reshapelow_res_masks_dim_3 : " \ 
-			<< low_res_dims.at(3) << std::endl;
-	*/
-
+	std::cout << "[INFO] Reshapelow_res_masks_dim_0 : " << low_res_dims.at(0) << " Reshapelow_res_masks_dim_1 : " \
+		<< low_res_dims.at(1) << std::endl;
+	std::cout << "[INFO] Reshapelow_res_masks_dim_2 : " << low_res_dims.at(2) << " Reshapelow_res_masks_dim_3 : " \
+		<< low_res_dims.at(3) << std::endl;
+	
 	std::vector<MatInfo> masks_list;
 	for (int index = 0 ;  index < Resizemasks_nums ; index++)
 	{

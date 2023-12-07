@@ -52,6 +52,7 @@ The SAM encoder and decoder are decoupled and quantized. After decoupling, if yo
 | --use_demo | / | Default |
 | --use_boxinfo | / | Default False |
 | --use_singlemask | / | Default False |
+| --keep_boxinfo | / | Default true |
 | --threshold | / | Default 0.9 |
 
 ```
@@ -60,13 +61,10 @@ $ Release/main.exe --encoder_model_path --decoder_model_path
 ```
 ### Operations
 | Operation | Mode | Description |
-|:------:|:----:|:------:| :------:|
+|:------:|:----:|:------:|
 | Mouse Left Button Down | use_demo | Default 0.9 |
 | Mouse Right Button Down | use_demo | Default 0.9 |
 | Keyboard Shift Key + Mouse Left Button Down | use_demo && use_boxinfo | Default 0.9 |
-
-
-
 
 
 ## Experiment Record
