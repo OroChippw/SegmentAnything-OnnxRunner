@@ -1,7 +1,0 @@
-# include <iostream>
-
-void ParametersDescription()
-{
-    
-
-}

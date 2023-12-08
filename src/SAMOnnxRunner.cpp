@@ -65,11 +65,11 @@ bool SAMOnnxRunner::Encoder_BuildEmbedding(const cv::Mat& Image)
 	std::cout << "[INFO] Encoder BuildEmbedding Start ..." << std::endl;
 	for (int i = 0; i < EncoderInputShape[2]; i++) {
 		for (int j = 0; j < EncoderInputShape[3]; j++) {
-			inputTensorValues[i * EncoderInputShape[3] + j] = Image.at<cv::Vec3f>(i, j)[2];
+			inputTensorValues[i * EncoderInputShape[3] + j] = static_cast<uchar>(Image.at<cv::Vec3f>(i, j)[2]);
 			inputTensorValues[EncoderInputShape[2] * EncoderInputShape[3] + i * EncoderInputShape[3] + j] =
-				Image.at<cv::Vec3f>(i, j)[1];
+				static_cast<uchar>(Image.at<cv::Vec3f>(i, j)[1]);
 			inputTensorValues[2 * EncoderInputShape[2] * EncoderInputShape[3] + i * EncoderInputShape[3] + j] =
-				Image.at<cv::Vec3f>(i, j)[0];
+				static_cast<uchar>(Image.at<cv::Vec3f>(i, j)[0]);
 		}
 	}
 
@@ -155,7 +155,8 @@ std::vector<MatInfo> SAMOnnxRunner::Decoder_Inference(Configuration cfg , cv::Ma
 		float max_iou_value = 0;
 		int max_iou_idx = -1;
 		// 筛出IoU最高的mask作为mask_input
-		for (int i = 0 ; i < 4 ; i++)
+		int result_length = 1 ? cfg.UseSingleMask : 4;
+		for (int i = 0 ; i < result_length ; i++)
 		{
 			if (IoU_Prediction_TensorData[i] > max_iou_value)
 			{

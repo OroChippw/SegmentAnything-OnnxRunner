@@ -26,8 +26,6 @@ struct ClickInfo
 {
 	cv::Point pt;
 	bool positive;
-
-	ClickInfo() : pt(-1, -2), positive(false) {}
 };
 
 struct MatInfo

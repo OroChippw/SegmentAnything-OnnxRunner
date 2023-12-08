@@ -51,8 +51,8 @@ BoxInfo ResizeLongestSide_apply_box(cv::Mat Image , BoxInfo boxinfo , int encode
 	const unsigned int w = Image.cols;
 	std::tuple<int, int> newShape = GetPreProcessShape(h, w, encoder_input_size);
 
-	float new_w = std::get<1>(newShape);
-	float new_h = std::get<0>(newShape);
+	float new_w = static_cast<float>(std::get<1>(newShape));
+	float new_h = static_cast<float>(std::get<0>(newShape));
 
 	boxinfo.left_top.x = boxinfo.left_top.x * float(new_w / w);
 	boxinfo.left_top.y = boxinfo.left_top.y * float(new_h / h);

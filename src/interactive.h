@@ -1,6 +1,9 @@
 #pragma once
+#include <mutex>
 #include <opencv2/opencv.hpp>
 #include "SAMOnnxRunner.h"
+
+std::mutex mouseParamsMutex;
 
 struct MouseParams 
 {
@@ -19,8 +22,10 @@ struct MouseParams
 
 void GetClick_handler(int event, int x, int y, int flags, void* data)
 {
-    // ClickInfo* clickinfo = reinterpret_cast<ClickInfo*>(data);
     MouseParams* mouseparams = reinterpret_cast<MouseParams*>(data);
+
+    std::lock_guard<std::mutex> lock(mouseParamsMutex);
+
     cv::Mat tempImage = mouseparams->image.clone();
 
     if (event == cv::EVENT_LBUTTONDOWN && (flags & cv::EVENT_FLAG_SHIFTKEY))
@@ -70,5 +75,4 @@ void GetClick_handler(int event, int x, int y, int flags, void* data)
     }
     
     cv::imshow("Segment Anything Onnx Runner Demo", tempImage);
-
 }

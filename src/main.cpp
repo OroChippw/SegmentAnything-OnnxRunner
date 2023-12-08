@@ -1,4 +1,4 @@
-/*
+﻿/*
     # Author : OroChippw
     # Last Change : 2023.11.20
 */
@@ -10,7 +10,6 @@
 #include <filesystem>
 #include <opencv2/opencv.hpp>
 
-#include "args.h"
 #include "SAMOnnxRunner.h"
 #include "interactive.h"
 
@@ -78,6 +77,7 @@ int main(int argc , char* argv[])
     }
 
     if (encoder_model_path.empty() || decoder_model_path.empty() || image_path.empty()) {
+        std::cout << "[ERROR] Model path (--encoder_model_path/--decoder_model_path) or Image path (--image_path) not provided." << std::endl;
         throw std::runtime_error("[ERROR] Model path (--encoder_model_path/--decoder_model_path) \
             or Image path (--image_path) not provided.");
     }
@@ -133,19 +133,15 @@ int main(int argc , char* argv[])
         cv::setMouseCallback(
             windowName , GetClick_handler , reinterpret_cast<void*>(&mouseparams)
         );
-
+        
         bool RunnerWork = true;
         while (RunnerWork)
         {
             std::vector<MatInfo> maskinfo;
             // 当产生有效点击时才进行推理
-            if (mouseparams.clickinfo.pt.x > 0 && mouseparams.clickinfo.pt.y > 0)
+            if ((mouseparams.clickinfo.pt.x > 0) && (mouseparams.clickinfo.pt.y > 0))
             {
-                std::cout << "--->" << mouseparams.clickinfo.pt.x << std::endl;
-                std::cout << "--->" << mouseparams.clickinfo.pt.y << std::endl;
-
                 maskinfo = Segmentator.InferenceSingleImage(cfg, srcImage, mouseparams.clickinfo , mouseparams.boxinfo);
-
                 unsigned int index = 0;
                 // Apply mask to image
                 visualImage = cv::Mat::zeros(srcImage.size(), CV_8UC3);
@@ -166,7 +162,7 @@ int main(int argc , char* argv[])
             }
 
             cv::imshow(windowName, visualImage);
-
+ 
             int key = cv::waitKeyEx(100);
             switch (key) {
             case 27:
