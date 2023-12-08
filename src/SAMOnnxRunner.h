@@ -44,7 +44,7 @@ private:
 	int EncoderInputSize = 1024;
 
 	// Decoder Settings Params
-	float SegThreshold;
+	double SegThreshold;
 
 	// Env Settings Params
 	std::string device{ "cpu" };
@@ -58,13 +58,16 @@ private:
 		OrtArenaAllocator, OrtMemTypeDefault
 	);
 
-
 	const char* DecoderInputNames[6]{ "image_embeddings", "point_coords",   "point_labels",
 							 "mask_input", "has_mask_input", "orig_im_size" },
 		* DecoderOutputNames[3]{ "masks", "iou_predictions", "low_res_masks" };
-
+	
 	// Image Eembedding
 	std::vector<float> image_embedding;
+
+	// low_res_masks for mask_input
+	std::vector<Ort::Value> tensors_buffer;
+
 
 protected:
 	const unsigned int num_threads;
@@ -74,6 +77,7 @@ protected:
 	bool Encoder_BuildEmbedding(const cv::Mat& Image);
 	
 	std::vector<MatInfo> Decoder_Inference(Configuration cfg , cv::Mat srcIamge , ClickInfo clickinfo , BoxInfo boxinfo);
+
 
 public:
 	explicit SAMOnnxRunner(unsigned int num_threads = 1);

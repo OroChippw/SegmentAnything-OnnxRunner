@@ -1,6 +1,6 @@
-/*
+﻿/*
     # Author : OroChippw
-    # Last Change : 2023.11.14
+    # Last Change : 2023.11.20
 */
 #include <map>
 #include <iostream>
@@ -20,7 +20,7 @@ int main(int argc , char* argv[])
     /* <------ CONFIG START ------> */
     // Define a vector to store parameter names and parameter values
     std::map<std::string , std::string> arguments;
-    for (unsigned int i = 1 ; i < argc ; i++)
+    for (int i = 1 ; i < argc ; i++)
     {
         std::string arg = argv[i];
         if (arg.substr(0 , 2) == "--")
@@ -39,7 +39,8 @@ int main(int argc , char* argv[])
 
     std::string encoder_model_path , decoder_model_path;
     std::string image_path , save_dir;
-    bool USE_BOXINFO = true , USE_DEMO = true , USE_SINGLEMASK = false;
+    bool USE_BOXINFO = false , USE_DEMO = true , USE_SINGLEMASK = false;
+    bool KEEP_BOXINFO = true;
     double threshold = 0.9;
 
     for (const auto& arg : arguments)
@@ -76,6 +77,7 @@ int main(int argc , char* argv[])
     }
 
     if (encoder_model_path.empty() || decoder_model_path.empty() || image_path.empty()) {
+        std::cout << "[ERROR] Model path (--encoder_model_path/--decoder_model_path) or Image path (--image_path) not provided." << std::endl;
         throw std::runtime_error("[ERROR] Model path (--encoder_model_path/--decoder_model_path) \
             or Image path (--image_path) not provided.");
     }
@@ -88,7 +90,7 @@ int main(int argc , char* argv[])
             {
                 std::filesystem::create_directory(folder_path);
                 std::cout << "[INFO] No save folder provided, create default folder at " << folder_path << std::endl;
-            } else 
+            } else
             {
                 std::cout << "[INFO] No save folder provided, result will save at " << folder_path << std::endl;
             }
@@ -98,76 +100,85 @@ int main(int argc , char* argv[])
         }
     }
 
-    unsigned int box_top_left_x , box_top_left_y , box_bot_right_x , box_bot_right_y;
-    if (USE_BOXINFO)
-    {
-        box_top_left_x = 1333;
-        box_top_left_y = 815;
-        box_bot_right_x = 2048;
-        box_bot_right_y = 1550; 
-    }
-
     /* <------ CONFIG END ------> */
 
     Configuration cfg;
     cfg.EncoderModelPath = encoder_model_path;
-    cfg.DecoderModelPath = decoder_model_path;
+    cfg.DecoderModelPath = decoder_model_path; 
     cfg.SaveDir = save_dir;
     cfg.SegThreshold = threshold;
     cfg.UseSingleMask = USE_SINGLEMASK;
     cfg.UseBoxInfo = USE_BOXINFO;
+    cfg.KeepBoxInfo = KEEP_BOXINFO;
 
     // Init Onnxruntime Env
     SAMOnnxRunner Segmentator(std::thread::hardware_concurrency());
     Segmentator.InitOrtEnv(cfg);
 
-    ClickInfo clickinfo_test;
-    BoxInfo boxinfo_test;
-
-    BoxInfo boxinfo(box_top_left_x , box_top_left_y , box_bot_right_x , box_bot_right_y);
     cv::Mat srcImage = cv::imread(image_path, -1);
-    cv::Mat outImage = srcImage.clone();
+    cv::Mat visualImage = srcImage.clone();
+    cv::Mat maskImage;
+
     if (USE_DEMO)
     {
         std::cout << "[WELCOME] Segment Anything Onnx Runner Demo" << std::endl;
         auto windowName = "Segment Anything Onnx Runner Demo";
-        cv::namedWindow(windowName, 0);
+
+        MouseParams mouseparams;
+
+        mouseparams.image = visualImage;
+        cv::namedWindow(windowName, cv::WINDOW_NORMAL);
+        cv::resizeWindow(windowName , srcImage.cols / 2 , srcImage.rows / 2);
+
         cv::setMouseCallback(
-            windowName , GetClick_handler , reinterpret_cast<void*>(&clickinfo_test)
+            windowName , GetClick_handler , reinterpret_cast<void*>(&mouseparams)
         );
+        
         bool RunnerWork = true;
         while (RunnerWork)
         {
-            if (clickinfo_test.pt.x > 0 && clickinfo_test.pt.y > 0)
+            std::vector<MatInfo> maskinfo;
+            // 当产生有效点击时才进行推理
+            if ((mouseparams.clickinfo.pt.x > 0) && (mouseparams.clickinfo.pt.y > 0))
             {
-                auto maskinfo = Segmentator.InferenceSingleImage(cfg, srcImage, clickinfo_test, boxinfo);
+                maskinfo = Segmentator.InferenceSingleImage(cfg, srcImage, mouseparams.clickinfo , mouseparams.boxinfo);
                 unsigned int index = 0;
-
-                // apply mask to image
-                outImage = cv::Mat::zeros(srcImage.size(), CV_8UC3);
+                // Apply mask to image
+                visualImage = cv::Mat::zeros(srcImage.size(), CV_8UC3);
                 for (int i = 0; i < srcImage.rows; i++) {
                     for (int j = 0; j < srcImage.cols; j++) {
-                        if (cfg.UseSingleMask)
-                        {
-                            index = 0;
-                        }
-                        auto bFront = maskinfo[index].mask.at<uchar>(i, j) > 0;
-                        float factor = bFront ? 1.0 : 0.5;
-                        outImage.at<cv::Vec3b>(i, j) = srcImage.at<cv::Vec3b>(i, j) * factor;
+                        double factor = maskinfo[index].mask.at<uchar>(i, j) > 0 ? 1.0 : 0.4;
+                        visualImage.at<cv::Vec3b>(i, j) = srcImage.at<cv::Vec3b>(i, j) * factor;
                     }
                 }
+                maskImage = maskinfo[0].mask;
             }
-            clickinfo_test.pt.x = 0;
-            clickinfo_test.pt.y = 0;
-            cv::imshow(windowName, outImage);
+            mouseparams.clickinfo.pt.x = 0;
+            mouseparams.clickinfo.pt.y = 0;
+            if (!cfg.KeepBoxInfo)
+            {
+                mouseparams.boxinfo.left_top = cv::Point(0 , 0);
+                mouseparams.boxinfo.right_bot = cv::Point(srcImage.cols , srcImage.rows);
+            }
+
+            cv::imshow(windowName, visualImage);
+ 
             int key = cv::waitKeyEx(100);
             switch (key) {
             case 27:
-            case 'q': {
+            case 'q': { // Quit Segment Anything Onnx Runner Demo
                 RunnerWork = false;
             } break;
-            case 'c': {
-                outImage = srcImage.clone();
+            case 'c': { 
+                // Continue , Use the mask output from the previous run. 
+                if (!(maskImage.empty())) 
+                {
+                    std::cout << "[INFO] The maskImage is not empty, and the mask with the highest confidence is used as the mask_input of the decoder." << std::endl;
+                    cfg.HasMaskInput = true;
+                } else 
+                {
+                    std::cout << "[WARNINGS] The maskImage is empty, and there is no available mask as the mask_input of the decoder." << std::endl;
+                }
             } break;
             }
         }
