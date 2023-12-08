@@ -1,4 +1,5 @@
 # SegmentAnything-OnnxRunner
+| [English](README.md) | [简体中文](README_CN.md) |
 <div align="center">
   <div style="display: flex; justify-content: center;">
     <img src="assets/truck_click_774_366_box_lt636_292_rb_874_454.jpg" width="400"/>
@@ -105,7 +106,6 @@ All models are available in [Baidu Pan](https://pan.baidu.com/s/1j0z1mHDOshOCcQW
 | sam_vit_b_01ec64_encoder-quantize.onnx | 103MB | 2.0446 | 
 | sam_vit_l_0b3195_encoder.onnx          | 1.14GB | 6.0346 | 
 | sam_vit_l_0b3195_encoder-quantize.onnx | 316MB | 4.1599 | 
-
 #### Decoder
 | Decoder version | Model Size(MB) | CPU decoding speed(s) | 
 | :------------------:| :---------------: | :---------------: | 
