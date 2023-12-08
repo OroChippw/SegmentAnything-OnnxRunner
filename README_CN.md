@@ -1,4 +1,5 @@
 # SegmentAnything-OnnxRunner
+| [English](README.md) | [简体中文](README_CN.md) |
 <div align="center">
   <div style="display: flex; justify-content: center;">
     <img src="assets/truck_click_774_366_box_lt636_292_rb_874_454.jpg" width="400"/>
